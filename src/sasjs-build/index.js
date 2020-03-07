@@ -56,8 +56,6 @@ async function createFinalSasFile() {
     buildDestinationFolder,
     "deploywebservices.sas"
   );
-  const createWebServiceScript = await getCreateWebServiceScript();
-  finalSasFileContent += `\n${createWebServiceScript}`;
   const buildConfig = await getBuildConfig();
   finalSasFileContent += `\n${buildConfig}`;
   const folderContent = await getFolderContent();
@@ -108,7 +106,9 @@ function getServiceText(serviceName, fileContent) {
   let content = ``;
   sourceCodeLines.forEach(line => {
     const escapedLine = line.split("'").join("''");
-    content += `\n put '${escapedLine}';`;
+    if (escapedLine.trim()) {
+      content += `\n put '${escapedLine.trim()}';`;
+    }
   });
   return `%let service= ${serviceName} ;
 filename sasjs temp lrecl=32767;
@@ -126,17 +126,24 @@ function getLines(text) {
 }
 
 function removeComments(text) {
-  return text;
-}
-
-async function getCreateWebServiceScript() {
-  const createWebServiceScript = await readFile(
-    path.join(getMacroCorePath(), "meta", "mm_createwebservice.sas")
-  );
-  const dependencyFilePaths = await getDependencyPaths(createWebServiceScript);
-  const dependenciesContent = await getDependencies(dependencyFilePaths);
-
-  return `${dependenciesContent}\n${createWebServiceScript}`;
+  const lines = text.split("\n").map(l => l.trim());
+  const linesWithoutComment = [];
+  let inCommentBlock = false;
+  lines.forEach(line => {
+    if (line.startsWith("/*")) {
+      inCommentBlock = true;
+    }
+    if (!inCommentBlock) {
+      linesWithoutComment.push(line);
+    }
+    if (line.endsWith("*/") && !line.includes("/*") && inCommentBlock) {
+      inCommentBlock = false;
+    }
+    if (line.startsWith("/*") && line.endsWith("*/")) {
+      inCommentBlock = false;
+    }
+  });
+  return linesWithoutComment.filter(l => !!l.trim()).join("\n");
 }
 
 async function copyFilesToBuildFolder() {
