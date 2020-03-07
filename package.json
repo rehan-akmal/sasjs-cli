@@ -4,14 +4,15 @@
   "description": "Command line interface for SASjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "semantic-release": "semantic-release"
   },
   "bin": {
     "sasjs": "bin/sasjs"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/macropeople/sasjs-cli.git"
+    "url": "https://github.com/macropeople/sasjs-cli"
   },
   "keywords": [
     "SAS",
@@ -21,9 +22,9 @@
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://gitlab.com/macropeople/sasjs-cli/issues"
+    "url": "https://github.com/macropeople/sasjs-cli/issues"
   },
-  "homepage": "https://gitlab.com/macropeople/sasjs-cli#readme",
+  "homepage": "https://github.com/macropeople/sasjs-cli",
   "dependencies": {
     "chalk": "^3.0.0",
     "esm": "^3.2.25",
@@ -35,6 +36,6 @@
     "shelljs": "^0.8.3"
   },
   "devDependencies": {
-    "standard-version": "^7.1.0"
+    "semantic-release": "^17.0.4"
   }
 }
