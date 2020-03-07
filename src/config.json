@@ -1,0 +1,90 @@
+{
+  "folders": [
+    {
+      "folderName": "sas",
+      "files": [],
+      "subFolders": [
+        {
+          "folderName": "db",
+          "files": [],
+          "subFolders": [
+            {
+              "folderName": "LIBREF1",
+              "files": [
+                {
+                  "fileName": "table1.ddl",
+                  "content": "/**\n\nDDL files provide the structure of a table and should be written as SQL\nstatements WITHOUT the `proc sql;` prefix.  This is to prevent subsequent\ntables being created unnecessarily if there are any errors.\n\nThis comment can / should be removed.\n\nThe LIBREF (folder name) is passed in as a macro variable named `CURLIB`.\n\n**/\n\ncreate table &curlib..dim_product(\n    tx_from num not null format=datetime19.3,\n    tx_to num not null format=datetime19.3,\n    product_cd char(40) not null,\n    product_desc char(100) not null,\n  constraint pk\n    primary key(tx_from, product_cd));\n"
+                },
+                {
+                  "fileName": "table1.sas",
+                  "content": "/**\nSAS files are provided here to enable initial values to be loaded to tables.\nThis is not the place for TEST data - that should be added as part of\na test suite.\n\nSAS Datalines provide a very concise and controlled way to load data.  Such\nprograms can be generated using the following utility:\n\nhttps://github.com/macropeople/macrocore/blob/master/base/mp_ds2cards.sas\n\nTables should first be created in WORK then proc appended to the target (CURLIB)\nlibrary.\n\nThis comment can / should be deleted.\n\n**/\n\ndata dim_product(index=(pk=(tx_from product_cd)/unique));\n  retain tx_from 0;\n  retain tx_to '31DEC9999:23:59:59'dt;\ninfile cards dsd;\ninput product_cd:$40. product_desc:$100.;\ncards4;\n001,some product\n002,some other product\n003,you get the picture\n;;;;\nrun;\n\nproc append base=&curlib..dim_product data=dim_product;\nrun;\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "folderName": "build",
+          "files": [
+            {
+              "fileName": "buildinit.sas",
+              "content": "/**\n  @file buildinit.sas\n  @brief this file is executed at the start of the SAS build\n  @details  This file is included at the start of the build, *after* the macros\n    and *before* the service definitions.\n\n  <h4> Dependencies </h4>\n\n**/\n\n%let appLoc=/Public/app;\n%let sastype=SAS9;\n/* do not modify below this line*/\n%let type=m;\ndata _null_;\nif symexist('sastype') then do;\nif upcase(symget('sastype'))='SASVIYA' then do;\ncall symputx('type','v');\nend;\nend;run;"
+            },
+            {
+              "fileName": "serviceinit.sas",
+              "content": "/**\n  @file serviceinit.sas\n  @brief this file is called with every service\n  @details  This file is included in *every* service, *after* the macros and *before* the service code.\n\n  <h4> Dependencies </h4>\n\n**/\n\n%put service is starting!!;"
+            },
+            {
+              "fileName": "serviceterm.sas",
+              "content": "/**\n  @file serviceterm.sas\n  @brief this file is called at the end of every service\n  @details  This file is included at the *end* of every service.\n\n  <h4> Dependencies </h4>\n  @li mf_abort.sas\n  @li mf_existds.sas\n\n**/\n\n%put service is finishing.  Thanks, SASjs!;"
+            }
+          ]
+        },
+        {
+          "folderName": "macros",
+          "files": [
+            {
+              "fileName": "examplemacro.sas",
+              "content": "/**\n  @file examplemacro.sas\n  @brief an example of a macro to be used in a service\n  @details  This macro is great. Yadda yadda yadda.  Usage:\n\n    * code formatting applies when indented by 4 spaces;\n    %examplemacro()\n\n  <h4> Dependencies </h4>\n  @li doesnothing.sas\n\n  @author Allan Bowe\n**/\n\n%macro examplemacro();\n\nproc sql;\ncreate table areas\n  as select area\nfrom sashelp.springs;\n\n%doesnothing()\n\n%mend;\n"
+            },
+            {
+              "fileName": "yetanothermacro.sas",
+              "content": "/**\n  @file yetanothermacro.sas\n  @brief Yet another example of a macro to be used in a service\n  @details  This macro is also great. Yadda yadda yadda. \n\n  <h4> Dependencies </h4>\n  @li doesnothing.sas\n\n**/\n\n%macro yetanothermacro();\n\nproc sort data= areas nodupkey;\n by area;\nrun;\n%doesnothing()\n\n%mend;\n"
+            },
+            {
+              "fileName": "doesnothing.sas",
+              "content": "%macro doesnothing();\n%put check this, nothing happened!; \n%mend;\n"
+            }
+          ]
+        },
+        {
+          "folderName": "services",
+          "files": [],
+          "subFolders": [
+            {
+              "folderName": "admin",
+              "files": [
+                {
+                  "fileName": "dostuff.sas",
+                  "content": "/**\n  @file dostuff.sas\n  @brief example file\n  @details  This service does stuff. Like - ya know - stuff.\n\n  <h4> Dependencies </h4>\n  @li mv_createfolder.sas\n  @li mm_getauthinfo.sas\n\n**/\n\n%put stuff;\n"
+                }
+              ]
+            },
+            {
+              "folderName": "common",
+              "files": [
+                {
+                  "fileName": "appinit.sas",
+                  "content": "/**\n  @file appinit.sas\n  @brief Initialisation service - runs on app startup\n  @details  This is always the first service called when the app is opened.\n\n  <h4> Dependencies </h4>\n  @li examplemacro.sas\n  @li yetanothermacro.sas\n\n**/\n\n\n%examplemacro()\n%yetanothermacro()\n\n%webout(OPEN)\n%webout(OBJ,areas)\n%webout(CLOSE)\n"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "macroLocations": ["sas"],
+  "useMacroCore": true,
+  "buildFolders": ["services"]
+}

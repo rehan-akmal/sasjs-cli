@@ -1,0 +1,38 @@
+{
+  "name": "sasjs-cli",
+  "version": "1.0.0",
+  "description": "Command line interface for SASjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "sasjs": "bin/sasjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/macropeople/sasjs-cli.git"
+  },
+  "keywords": [
+    "SAS","Viya","SASjs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/macropeople/sasjs-cli/issues"
+  },
+  "homepage": "https://gitlab.com/macropeople/sasjs-cli#readme",
+  "dependencies": {
+    "chalk": "^3.0.0",
+    "esm": "^3.2.25",
+    "find": "^0.3.0",
+    "fs": "0.0.1-security",
+    "fs-extra": "^8.1.0",
+    "macrocore": "^1.1.1",
+    "rimraf": "^3.0.2",
+    "shelljs": "^0.8.3"
+  },
+  "devDependencies": {
+    "standard-version": "^7.1.0"
+  }
+}
