@@ -25,6 +25,10 @@ function checkNodeVersion() {
 
 export async function cli(args) {
   const command = parseCommand(args);
+  if (!command) {
+    showInvalidCommandText();
+    return;
+  }
   switch (command.name) {
     case "create":
       await createFileStructure(command.parameters);
@@ -36,11 +40,15 @@ export async function cli(args) {
       await showHelp();
       break;
     default:
-      console.log(
-        chalk.redBright.bold(
-          "Invalid SASjs command! Run `sasjs help` for a full list of available commands."
-        )
-      );
+      showInvalidCommandText();
       break;
   }
+}
+
+function showInvalidCommandText() {
+  console.log(
+    chalk.redBright.bold(
+      "Invalid SASjs command! Run `sasjs help` for a full list of available commands."
+    )
+  );
 }
