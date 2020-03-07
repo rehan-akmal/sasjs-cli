@@ -14,7 +14,9 @@
     "url": "git+https://gitlab.com/macropeople/sasjs-cli.git"
   },
   "keywords": [
-    "SAS","Viya","SASjs"
+    "SAS",
+    "Viya",
+    "SASjs"
   ],
   "author": "",
   "license": "ISC",
@@ -28,7 +30,7 @@
     "find": "^0.3.0",
     "fs": "0.0.1-security",
     "fs-extra": "^8.1.0",
-    "macrocore": "^1.1.1",
+    "macrocore": "^1.1.2",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.3"
   },
