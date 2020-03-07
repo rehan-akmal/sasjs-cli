@@ -17,4 +17,5 @@ Command Line Interface for SASjs.
 ## Available Options
 
 - `create`: creates the folders and files specified in `file-structure.json`, in the current working directory.
+- `build`: loads dependencies and builds services for SAS.
 - `help`: displays help text.
