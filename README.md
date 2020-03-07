@@ -4,10 +4,11 @@ Command Line Interface for SASjs.
 
 ## Usage
 
-1. Clone this repository.
-2. Run `npm install`.
-3. Run `npm link`.
-4. You will then be able to run the command `sasjs` from your command line with one of the available options.
+1. Install the CLI via `npm`
+   ```
+       npm install -g sasjs-cli
+   ```
+2. You will then be able to run the command `sasjs` from your command line with one of the available options.
 
 ```
     sasjs <option>
