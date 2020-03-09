@@ -10,7 +10,7 @@ import {
   deleteFolder,
   copy
 } from "../utils/file-utils";
-import { asyncForEach } from "../utils/utils";
+import { asyncForEach, removeComments } from "../utils/utils";
 import { getSourcePaths, getConfiguration } from "../utils/config-utils";
 
 const buildDestinationFolder = path.join(process.cwd(), "sasbuild");
@@ -123,27 +123,6 @@ run;
 function getLines(text) {
   let lines = text.split("\n").map(l => l.trim());
   return lines;
-}
-
-function removeComments(text) {
-  const lines = text.split("\n").map(l => l.trim());
-  const linesWithoutComment = [];
-  let inCommentBlock = false;
-  lines.forEach(line => {
-    if (line.startsWith("/*")) {
-      inCommentBlock = true;
-    }
-    if (!inCommentBlock) {
-      linesWithoutComment.push(line);
-    }
-    if (line.endsWith("*/") && !line.includes("/*") && inCommentBlock) {
-      inCommentBlock = false;
-    }
-    if (line.startsWith("/*") && line.endsWith("*/")) {
-      inCommentBlock = false;
-    }
-  });
-  return linesWithoutComment.filter(l => !!l.trim()).join("\n");
 }
 
 async function copyFilesToBuildFolder() {
