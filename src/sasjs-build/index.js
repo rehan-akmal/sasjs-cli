@@ -30,7 +30,7 @@ export async function build() {
     const filesNamesInPath = await getFilesInFolder(folderPath);
     await asyncForEach(filesNamesInPath, async fileName => {
       const filePath = path.join(folderPath, fileName);
-      await loadDependencies(filePath, true);
+      await loadDependencies(filePath);
     });
     await asyncForEach(subFolders, async subFolder => {
       const fileNames = await getFilesInFolder(
@@ -38,7 +38,7 @@ export async function build() {
       );
       await asyncForEach(fileNames, async fileName => {
         const filePath = path.join(folderPath, subFolder, fileName);
-        await loadDependencies(filePath, true);
+        await loadDependencies(filePath);
       });
     });
   });
@@ -166,20 +166,19 @@ async function recreateBuildFolder() {
   await createFolder(buildDestinationFolder);
 }
 
-async function loadDependencies(filePath, isService = false) {
+async function loadDependencies(filePath) {
   console.log(
     chalk.greenBright("Loading dependencies for", chalk.cyanBright(filePath))
   );
   let fileContent = await readFile(filePath);
-  const dependencyFilePaths = await getDependencyPaths(fileContent);
+  const serviceInit = await getServiceInit();
+  const serviceTerm = await getServiceTerm();
+  const dependencyFilePaths = await getDependencyPaths(
+    `${fileContent}\n${serviceInit}\n${serviceTerm}`
+  );
   const dependenciesContent = await getDependencies(dependencyFilePaths);
-  if (isService) {
-    const serviceInit = await getServiceInit();
-    const serviceTerm = await getServiceTerm();
-    fileContent = `${dependenciesContent}\n${serviceInit}\n${fileContent}\n${serviceTerm}`;
-  } else {
-    fileContent = `${dependenciesContent}\n${fileContent}`;
-  }
+  fileContent = `* Dependencies start;\n${dependenciesContent}\n* Dependencies end;\n* ServiceInit start;${serviceInit}\n* ServiceInit end;\n* Service start;\n${fileContent}\n* Service end;\n* ServiceTerm start;\n${serviceTerm}\n* ServiceTerm end;`;
+
   await createFile(filePath, fileContent);
 }
 
@@ -187,18 +186,14 @@ async function getServiceInit() {
   const serviceInit = await readFile(
     path.join(process.cwd(), "sas", "build", "serviceinit.sas")
   );
-  const dependencyFilePaths = await getDependencyPaths(serviceInit);
-  const dependenciesContent = await getDependencies(dependencyFilePaths);
-  return `${dependenciesContent}\n${serviceInit}`;
+  return serviceInit;
 }
 
 async function getServiceTerm() {
   const serviceTerm = await readFile(
     path.join(process.cwd(), "sas", "build", "serviceterm.sas")
   );
-  const dependencyFilePaths = await getDependencyPaths(serviceTerm);
-  const dependenciesContent = await getDependencies(dependencyFilePaths);
-  return `${dependenciesContent}\n${serviceTerm}`;
+  return serviceTerm;
 }
 
 async function getDependencies(filePaths) {
