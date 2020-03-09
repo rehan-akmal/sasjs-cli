@@ -87,7 +87,7 @@ async function getFolderContent() {
 }
 
 async function getContentFor(folderPath, folderName) {
-  let content = `\n%let path=  ${folderName}   ;\n`;
+  let content = `\n%let path=${folderName === "services" ? "" : folderName};\n`;
   const files = await getFilesInFolder(folderPath);
   await asyncForEach(files, async file => {
     const fileContent = await readFile(path.join(folderPath, file));
@@ -101,7 +101,8 @@ async function getContentFor(folderPath, folderName) {
   return content;
 }
 
-function getServiceText(serviceName, fileContent) {
+function getServiceText(serviceFileName, fileContent) {
+  const serviceName = serviceFileName.replace(".sas", "");
   const sourceCodeLines = getLines(fileContent);
   let content = ``;
   sourceCodeLines.forEach(line => {
@@ -110,7 +111,7 @@ function getServiceText(serviceName, fileContent) {
       content += `\n put '${escapedLine.trim()}';`;
     }
   });
-  return `%let service= ${serviceName} ;
+  return `%let service=${serviceName};
 filename sasjs temp lrecl=32767;
 data _null_;
 file sasjs;
