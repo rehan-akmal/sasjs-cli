@@ -11,13 +11,11 @@ import {
   copy
 } from "../utils/file-utils";
 import { asyncForEach } from "../utils/utils";
-import {
-  getSourcePaths,
-  getConfiguration,
-  getMacroCorePath
-} from "../utils/config-utils";
+import { getSourcePaths, getConfiguration } from "../utils/config-utils";
 
 const buildDestinationFolder = path.join(process.cwd(), "sasbuild");
+
+let loadedDependencies = [];
 
 export async function build() {
   await copyFilesToBuildFolder();
@@ -30,7 +28,7 @@ export async function build() {
     const filesNamesInPath = await getFilesInFolder(folderPath);
     await asyncForEach(filesNamesInPath, async fileName => {
       const filePath = path.join(folderPath, fileName);
-      await loadDependencies(filePath, true);
+      await loadDependencies(filePath);
     });
     await asyncForEach(subFolders, async subFolder => {
       const fileNames = await getFilesInFolder(
@@ -38,11 +36,12 @@ export async function build() {
       );
       await asyncForEach(fileNames, async fileName => {
         const filePath = path.join(folderPath, subFolder, fileName);
-        await loadDependencies(filePath, true);
+        await loadDependencies(filePath);
       });
     });
   });
   await createFinalSasFile();
+  loadedDependencies = [];
 }
 
 async function createFinalSasFile() {
@@ -166,49 +165,58 @@ async function recreateBuildFolder() {
   await createFolder(buildDestinationFolder);
 }
 
-async function loadDependencies(filePath, isService = false) {
+async function loadDependencies(filePath) {
   console.log(
     chalk.greenBright("Loading dependencies for", chalk.cyanBright(filePath))
   );
   let fileContent = await readFile(filePath);
-  const dependencyFilePaths = await getDependencyPaths(fileContent);
+  const serviceInit = await getServiceInit();
+  const serviceTerm = await getServiceTerm();
+  const dependencyFilePaths = await getDependencyPaths(
+    `${fileContent}\n${serviceInit}\n${serviceTerm}`
+  );
+  loadedDependencies = [...loadedDependencies, ...dependencyFilePaths].filter(
+    d => !!d
+  );
+  loadedDependencies = [...new Set(loadedDependencies)];
+
   const dependenciesContent = await getDependencies(dependencyFilePaths);
-  if (isService) {
-    const serviceInit = await getServiceInit();
-    const serviceTerm = await getServiceTerm();
-    fileContent = `${dependenciesContent}\n${serviceInit}\n${fileContent}\n${serviceTerm}`;
-  } else {
-    fileContent = `${dependenciesContent}\n${fileContent}`;
-  }
+  fileContent = `* Dependencies start;\n${dependenciesContent}\n* Dependencies end;\n* ServiceInit start;${serviceInit}\n* ServiceInit end;\n* Service start;\n${fileContent}\n* Service end;\n* ServiceTerm start;\n${serviceTerm}\n* ServiceTerm end;`;
+
   await createFile(filePath, fileContent);
+}
+
+function diff(x, y) {
+  return x.filter(a => !y.includes(a));
 }
 
 async function getServiceInit() {
   const serviceInit = await readFile(
     path.join(process.cwd(), "sas", "build", "serviceinit.sas")
   );
-  const dependencyFilePaths = await getDependencyPaths(serviceInit);
-  const dependenciesContent = await getDependencies(dependencyFilePaths);
-  return `${dependenciesContent}\n${serviceInit}`;
+  return serviceInit;
 }
 
 async function getServiceTerm() {
   const serviceTerm = await readFile(
     path.join(process.cwd(), "sas", "build", "serviceterm.sas")
   );
-  const dependencyFilePaths = await getDependencyPaths(serviceTerm);
-  const dependenciesContent = await getDependencies(dependencyFilePaths);
-  return `${dependenciesContent}\n${serviceTerm}`;
+  return serviceTerm;
 }
 
 async function getDependencies(filePaths) {
   let dependenciesContent = [];
-  await asyncForEach(filePaths, async filePath => {
+  loadedDependencies = [...new Set(loadedDependencies)].filter(d => !!d);
+  const dependenciesToLoad = diff(loadedDependencies, filePaths);
+  await asyncForEach(dependenciesToLoad, async filePath => {
     const depFileContent = await readFile(filePath);
     dependenciesContent.push(depFileContent);
     const dependencyPaths = await getDependencyPaths(depFileContent);
+    loadedDependencies = [...loadedDependencies, ...dependencyPaths];
     if (dependencyPaths.length) {
-      const nestedDepContent = await getDependencies(dependencyPaths);
+      const nestedDepContent = await getDependencies(
+        diff(loadedDependencies, dependencyPaths)
+      );
       dependenciesContent.push(nestedDepContent);
     } else {
       return dependenciesContent.join("\n");
@@ -237,7 +245,7 @@ async function getDependencyPaths(fileContent) {
       });
     });
 
-    return dependencyPaths;
+    return [...new Set(dependencyPaths)];
   } else {
     return [];
   }
