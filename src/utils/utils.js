@@ -25,3 +25,26 @@ export async function asyncForEach(array, callback) {
     await callback(array[index], index, array);
   }
 }
+
+export function removeComments(text) {
+  const lines = text.split("\n").map(l => l.trim());
+  const linesWithoutComment = [];
+  let inCommentBlock = false;
+  lines.forEach(line => {
+    if (line.includes("/*") && line.includes("*/")) {
+      const lineWithoutComment = line.replace(/\/\*[^\/\*]+\*\//g, "");
+      linesWithoutComment.push(lineWithoutComment);
+    } else {
+      if (line.startsWith("/*") && !line.endsWith("*/")) {
+        inCommentBlock = true;
+      }
+      if (!inCommentBlock) {
+        linesWithoutComment.push(line);
+      }
+      if (line.endsWith("*/") && !line.includes("/*") && inCommentBlock) {
+        inCommentBlock = false;
+      }
+    }
+  });
+  return linesWithoutComment.filter(l => !!l.trim()).join("\n");
+}
