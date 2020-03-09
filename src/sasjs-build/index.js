@@ -11,13 +11,11 @@ import {
   copy
 } from "../utils/file-utils";
 import { asyncForEach } from "../utils/utils";
-import {
-  getSourcePaths,
-  getConfiguration,
-  getMacroCorePath
-} from "../utils/config-utils";
+import { getSourcePaths, getConfiguration } from "../utils/config-utils";
 
 const buildDestinationFolder = path.join(process.cwd(), "sasbuild");
+
+let loadedDependencies = [];
 
 export async function build() {
   await copyFilesToBuildFolder();
@@ -43,6 +41,7 @@ export async function build() {
     });
   });
   await createFinalSasFile();
+  loadedDependencies = [];
 }
 
 async function createFinalSasFile() {
@@ -176,10 +175,19 @@ async function loadDependencies(filePath) {
   const dependencyFilePaths = await getDependencyPaths(
     `${fileContent}\n${serviceInit}\n${serviceTerm}`
   );
+  loadedDependencies = [...loadedDependencies, ...dependencyFilePaths].filter(
+    d => !!d
+  );
+  loadedDependencies = [...new Set(loadedDependencies)];
+
   const dependenciesContent = await getDependencies(dependencyFilePaths);
   fileContent = `* Dependencies start;\n${dependenciesContent}\n* Dependencies end;\n* ServiceInit start;${serviceInit}\n* ServiceInit end;\n* Service start;\n${fileContent}\n* Service end;\n* ServiceTerm start;\n${serviceTerm}\n* ServiceTerm end;`;
 
   await createFile(filePath, fileContent);
+}
+
+function diff(x, y) {
+  return x.filter(a => !y.includes(a));
 }
 
 async function getServiceInit() {
@@ -198,12 +206,17 @@ async function getServiceTerm() {
 
 async function getDependencies(filePaths) {
   let dependenciesContent = [];
-  await asyncForEach(filePaths, async filePath => {
+  loadedDependencies = [...new Set(loadedDependencies)].filter(d => !!d);
+  const dependenciesToLoad = diff(loadedDependencies, filePaths);
+  await asyncForEach(dependenciesToLoad, async filePath => {
     const depFileContent = await readFile(filePath);
     dependenciesContent.push(depFileContent);
     const dependencyPaths = await getDependencyPaths(depFileContent);
+    loadedDependencies = [...loadedDependencies, ...dependencyPaths];
     if (dependencyPaths.length) {
-      const nestedDepContent = await getDependencies(dependencyPaths);
+      const nestedDepContent = await getDependencies(
+        diff(loadedDependencies, dependencyPaths)
+      );
       dependenciesContent.push(nestedDepContent);
     } else {
       return dependenciesContent.join("\n");
@@ -232,7 +245,7 @@ async function getDependencyPaths(fileContent) {
       });
     });
 
-    return dependencyPaths;
+    return [...new Set(dependencyPaths)];
   } else {
     return [];
   }
