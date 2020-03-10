@@ -15,8 +15,6 @@ import { getSourcePaths, getConfiguration } from "../utils/config-utils";
 
 const buildDestinationFolder = path.join(process.cwd(), "sasbuild");
 
-let loadedDependencies = [];
-
 export async function build() {
   await copyFilesToBuildFolder();
   const buildFolders = await getBuildFolders(
@@ -28,7 +26,8 @@ export async function build() {
     const filesNamesInPath = await getFilesInFolder(folderPath);
     await asyncForEach(filesNamesInPath, async fileName => {
       const filePath = path.join(folderPath, fileName);
-      await loadDependencies(filePath);
+      const dependencies = await loadDependencies(filePath);
+      await createFile(filePath, dependencies);
     });
     await asyncForEach(subFolders, async subFolder => {
       const fileNames = await getFilesInFolder(
@@ -36,12 +35,12 @@ export async function build() {
       );
       await asyncForEach(fileNames, async fileName => {
         const filePath = path.join(folderPath, subFolder, fileName);
-        await loadDependencies(filePath);
+        const dependencies = await loadDependencies(filePath);
+        await createFile(filePath, dependencies);
       });
     });
   });
   await createFinalSasFile();
-  loadedDependencies = [];
 }
 
 async function createFinalSasFile() {
@@ -102,7 +101,7 @@ async function getContentFor(folderPath, folderName) {
 
 function getServiceText(serviceFileName, fileContent) {
   const serviceName = serviceFileName.replace(".sas", "");
-  const sourceCodeLines = getLines(fileContent);
+  const sourceCodeLines = getLines(removeComments(fileContent));
   let content = ``;
   sourceCodeLines.forEach(line => {
     const escapedLine = line.split("'").join("''");
@@ -144,7 +143,7 @@ async function recreateBuildFolder() {
   await createFolder(buildDestinationFolder);
 }
 
-async function loadDependencies(filePath) {
+export async function loadDependencies(filePath) {
   console.log(
     chalk.greenBright("Loading dependencies for", chalk.cyanBright(filePath))
   );
@@ -154,29 +153,26 @@ async function loadDependencies(filePath) {
   const dependencyFilePaths = await getDependencyPaths(
     `${fileContent}\n${serviceInit}\n${serviceTerm}`
   );
-  loadedDependencies = [...loadedDependencies, ...dependencyFilePaths].filter(
-    d => !!d
-  );
-  loadedDependencies = [...new Set(loadedDependencies)];
+  console.log(chalk.bgRedBright(dependencyFilePaths));
 
   const dependenciesContent = await getDependencies(dependencyFilePaths);
   fileContent = `* Dependencies start;\n${dependenciesContent}\n* Dependencies end;\n* ServiceInit start;${serviceInit}\n* ServiceInit end;\n* Service start;\n${fileContent}\n* Service end;\n* ServiceTerm start;\n${serviceTerm}\n* ServiceTerm end;`;
 
-  await createFile(filePath, fileContent);
+  return fileContent;
 }
 
 function diff(x, y) {
   return x.filter(a => !y.includes(a));
 }
 
-async function getServiceInit() {
+export async function getServiceInit() {
   const serviceInit = await readFile(
     path.join(process.cwd(), "sas", "build", "serviceinit.sas")
   );
   return serviceInit;
 }
 
-async function getServiceTerm() {
+export async function getServiceTerm() {
   const serviceTerm = await readFile(
     path.join(process.cwd(), "sas", "build", "serviceterm.sas")
   );
@@ -185,27 +181,15 @@ async function getServiceTerm() {
 
 async function getDependencies(filePaths) {
   let dependenciesContent = [];
-  loadedDependencies = [...new Set(loadedDependencies)].filter(d => !!d);
-  const dependenciesToLoad = diff(loadedDependencies, filePaths);
-  await asyncForEach(dependenciesToLoad, async filePath => {
+  await asyncForEach(filePaths, async filePath => {
     const depFileContent = await readFile(filePath);
     dependenciesContent.push(depFileContent);
-    const dependencyPaths = await getDependencyPaths(depFileContent);
-    loadedDependencies = [...loadedDependencies, ...dependencyPaths];
-    if (dependencyPaths.length) {
-      const nestedDepContent = await getDependencies(
-        diff(loadedDependencies, dependencyPaths)
-      );
-      dependenciesContent.push(nestedDepContent);
-    } else {
-      return dependenciesContent.join("\n");
-    }
   });
 
   return dependenciesContent.join("\n");
 }
 
-async function getDependencyPaths(fileContent) {
+export async function getDependencyPaths(fileContent) {
   const sourcePaths = await getSourcePaths();
   const dependenciesStart = fileContent.split("<h4> Dependencies </h4>");
   if (dependenciesStart.length > 1) {
@@ -217,9 +201,13 @@ async function getDependencyPaths(fileContent) {
     dependencies = [...new Set(dependencies)];
 
     const dependencyPaths = [];
-    sourcePaths.forEach(sourcePath => {
-      dependencies.forEach(dep => {
+    await asyncForEach(sourcePaths, async sourcePath => {
+      await asyncForEach(dependencies, async dep => {
         const filePaths = find.fileSync(dep, sourcePath);
+        if (filePaths.length) {
+          const fileContent = await readFile(filePaths[0]);
+          dependencyPaths.push(...(await getDependencyPaths(fileContent)));
+        }
         dependencyPaths.push(...filePaths);
       });
     });
