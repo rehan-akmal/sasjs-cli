@@ -32,8 +32,7 @@ export function removeComments(text) {
   let inCommentBlock = false;
   lines.forEach(line => {
     if (line.includes("/*") && line.includes("*/")) {
-      const lineWithoutComment = line.replace(/\/\*[^\/\*]+\*\//g, "");
-      linesWithoutComment.push(lineWithoutComment);
+      linesWithoutComment.push(line);
     } else {
       if (line.startsWith("/*") && !line.endsWith("*/")) {
         inCommentBlock = true;

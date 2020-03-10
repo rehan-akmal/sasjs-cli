@@ -13,7 +13,7 @@ export async function getConfiguration(pathToFile) {
 export async function getSourcePaths() {
   const configuration = await getConfiguration(
     path.join(process.cwd(), "sas", "config.json")
-  );
+  ).catch(() => ({ macroLocations: [], useMacroCore: true }));
   const sourcePaths = configuration.macroLocations.map(l =>
     path.join(process.cwd(), l)
   );

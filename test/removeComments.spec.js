@@ -7,9 +7,9 @@ describe("removeComments", () => {
     expect(removeComments(text)).toEqual("");
   });
 
-  test("should remove single line block comment", () => {
+  test("should not remove single line block comment", () => {
     const text = `/* test */`;
-    expect(removeComments(text)).toEqual("");
+    expect(removeComments(text)).toEqual(text);
   });
 
   test("should remove all comments from the provided SAS file", () => {
@@ -20,16 +20,14 @@ describe("removeComments", () => {
     expect(removeComments(sampleSasProgram)).toEqual(expected);
   });
 
-  test("should not remove code from a line that has an inline comment and code", () => {
+  test("should keep inline comments intact when they start a line", () => {
     const text = "/* Some Comment */ CODE HERE;";
-    const expected = " CODE HERE;";
-    expect(removeComments(text)).toEqual(expected);
+    expect(removeComments(text)).toEqual(text);
   });
 
-  test("should not remove code from a line that has code followed by an inline comment", () => {
+  test("should keep inline comments intact when they are within a line", () => {
     const text = "CODE HERE /* Some Comment  */";
-    const expected = "CODE HERE ";
     console.log(removeComments(text));
-    expect(removeComments(text)).toEqual(expected);
+    expect(removeComments(text)).toEqual(text);
   });
 });
