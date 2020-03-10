@@ -153,7 +153,6 @@ export async function loadDependencies(filePath) {
   const dependencyFilePaths = await getDependencyPaths(
     `${fileContent}\n${serviceInit}\n${serviceTerm}`
   );
-  console.log(chalk.bgRedBright(dependencyFilePaths));
 
   const dependenciesContent = await getDependencies(dependencyFilePaths);
   fileContent = `* Dependencies start;\n${dependenciesContent}\n* Dependencies end;\n* ServiceInit start;${serviceInit}\n* ServiceInit end;\n* Service start;\n${fileContent}\n* Service end;\n* ServiceTerm start;\n${serviceTerm}\n* ServiceTerm end;`;
