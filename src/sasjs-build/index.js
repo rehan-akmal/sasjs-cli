@@ -11,7 +11,12 @@ import {
   copy
 } from "../utils/file-utils";
 import { asyncForEach, removeComments } from "../utils/utils";
-import { getSourcePaths, getConfiguration } from "../utils/config-utils";
+import {
+  getSourcePaths,
+  getConfiguration,
+  getBuildTargets,
+  getMacroCorePath
+} from "../utils/config-utils";
 
 const buildDestinationFolder = path.join(process.cwd(), "sasbuild");
 
@@ -40,66 +45,110 @@ export async function build() {
       });
     });
   });
-  await createFinalSasFile();
+  await createFinalSasFiles();
 }
 
-async function createFinalSasFile() {
+async function createFinalSasFiles() {
+  const buildTargets = await getBuildTargets();
+  asyncForEach(buildTargets, async target => {
+    const { deployScript, appLoc, serverType } = target;
+    createFinalSasFile(deployScript, appLoc, serverType);
+  });
+}
+
+async function createFinalSasFile(fileName, appLoc, serverType) {
   console.log(
-    chalk.greenBright(
-      `Creating final ${chalk.cyanBright("deploywebservices.sas")} file`
-    )
+    chalk.greenBright(`Creating final ${chalk.cyanBright(fileName)} file`)
   );
   let finalSasFileContent = "";
-  const finalFilePath = path.join(
-    buildDestinationFolder,
-    "deploywebservices.sas"
-  );
-  const buildConfig = await getBuildConfig();
+  const finalFilePath = path.join(buildDestinationFolder, fileName);
+  const buildConfig = await getBuildConfig(appLoc, serverType);
   finalSasFileContent += `\n${buildConfig}`;
-  const folderContent = await getFolderContent();
+  const folderContent = await getFolderContent(serverType);
   finalSasFileContent += `\n${folderContent}`;
   finalSasFileContent = removeComments(finalSasFileContent);
   await createFile(finalFilePath, finalSasFileContent);
 }
 
-async function getBuildConfig() {
-  const buildConfig = await readFile(
-    path.join(process.cwd(), "sas", "build", "buildinit.sas")
-  );
+async function getBuildConfig(appLoc, serverType) {
+  let buildConfig = `%let appLoc=${appLoc}; /* metadata or files service location of your app */\n`;
+  const createWebServiceScript = await getCreateWebServiceScript(serverType);
+  buildConfig += `${createWebServiceScript}\n`;
   const dependencyFilePaths = await getDependencyPaths(buildConfig);
   const dependenciesContent = await getDependencies(dependencyFilePaths);
-  return `${dependenciesContent}\n${buildConfig}`;
+  return `${dependenciesContent}\n${buildConfig}\n`;
 }
 
-async function getFolderContent() {
+async function getCreateWebServiceScript(serverType) {
+  switch (serverType.toUpperCase()) {
+    case "SASVIYA":
+      return await readFile(
+        `${getMacroCorePath()}/viya/mv_createwebservice.sas`
+      );
+
+    case "SAS9":
+      return await readFile(
+        `${getMacroCorePath()}/meta/mm_createwebservice.sas`
+      );
+
+    default:
+      throw new Error(
+        `Invalid server type: valid options are ${chalk.cyanBright(
+          "SASVIYA"
+        )} and ${chalk.cyanBright("SAS9")}`
+      );
+  }
+}
+
+function getWebServiceScriptInvocation(serverType) {
+  switch (serverType.toUpperCase()) {
+    case "SASVIYA":
+      return "%mv_createwebservice(path=&appLoc/&path, name=&service, code=sasjs ,replace=yes)";
+    case "SAS9":
+      return "%mm_createwebservice(path=&appLoc/&path, name=&service, code=sasjs ,replace=yes)";
+    default:
+      throw new Error(
+        `Invalid server type: valid options are ${chalk.cyanBright(
+          "SASVIYA"
+        )} and ${chalk.cyanBright("SAS9")}`
+      );
+  }
+}
+
+async function getFolderContent(serverType) {
   const buildSubFolders = await getSubFoldersInFolder(buildDestinationFolder);
   let folderContent = "";
   await asyncForEach(buildSubFolders, async subFolder => {
     const content = await getContentFor(
       path.join(buildDestinationFolder, subFolder),
-      subFolder
+      subFolder,
+      serverType
     );
     folderContent += `\n${content}`;
   });
   return folderContent;
 }
 
-async function getContentFor(folderPath, folderName) {
+async function getContentFor(folderPath, folderName, serverType) {
   let content = `\n%let path=${folderName === "services" ? "" : folderName};\n`;
   const files = await getFilesInFolder(folderPath);
   await asyncForEach(files, async file => {
     const fileContent = await readFile(path.join(folderPath, file));
-    const transformedContent = getServiceText(file, fileContent);
+    const transformedContent = getServiceText(file, fileContent, serverType);
     content += `\n${transformedContent}\n`;
   });
   const subFolders = await getSubFoldersInFolder(folderPath);
   await asyncForEach(subFolders, async subFolder => {
-    content += await getContentFor(path.join(folderPath, subFolder), subFolder);
+    content += await getContentFor(
+      path.join(folderPath, subFolder),
+      subFolder,
+      serverType
+    );
   });
   return content;
 }
 
-function getServiceText(serviceFileName, fileContent) {
+function getServiceText(serviceFileName, fileContent, serverType) {
   const serviceName = serviceFileName.replace(".sas", "");
   const sourceCodeLines = getLines(removeComments(fileContent));
   let content = ``;
@@ -115,7 +164,7 @@ data _null_;
 file sasjs;
 ${content}\n
 run;
-%m&type._createwebservice(path=&appLoc/&path, name=&service, code=sasjs ,replace=yes)
+${getWebServiceScriptInvocation(serverType)}
 `;
 }
 
