@@ -196,20 +196,32 @@ export async function getDependencyPaths(fileContent) {
       .split("**/")[0]
       .split("\n")
       .filter(d => !!d)
-      .map(d => d.replace(/@li/g, "").replace(/ /g, ""));
+      .map(d => d.replace(/\@li/g, "").replace(/ /g, ""))
+      .filter(d => d.endsWith(".sas"));
     dependencies = [...new Set(dependencies)];
 
     const dependencyPaths = [];
+    const foundDependencies = [];
     await asyncForEach(sourcePaths, async sourcePath => {
       await asyncForEach(dependencies, async dep => {
         const filePaths = find.fileSync(dep, sourcePath);
         if (filePaths.length) {
           const fileContent = await readFile(filePaths[0]);
+          foundDependencies.push(dep);
           dependencyPaths.push(...(await getDependencyPaths(fileContent)));
         }
         dependencyPaths.push(...filePaths);
       });
     });
+
+    const unfoundDependencies = diff(dependencies, foundDependencies);
+    if (unfoundDependencies.length) {
+      throw new Error(
+        `${"Unable to locate dependencies:"} ${chalk.cyanBright(
+          unfoundDependencies.join(", ")
+        )}`
+      );
+    }
 
     return [...new Set(dependencyPaths)];
   } else {
