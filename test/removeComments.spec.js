@@ -27,7 +27,6 @@ describe("removeComments", () => {
 
   test("should keep inline comments intact when they are within a line", () => {
     const text = "CODE HERE /* Some Comment  */";
-    console.log(removeComments(text));
     expect(removeComments(text)).toEqual(text);
   });
 });
