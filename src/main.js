@@ -1,6 +1,7 @@
 import { build } from "./sasjs-build";
 import { create } from "./sasjs-create";
 import { printHelpText } from "./sasjs-help";
+import { printVersion } from "./sasjs-version";
 import chalk from "chalk";
 
 export async function createFileStructure(parentFolderName) {
@@ -24,6 +25,10 @@ export async function createFileStructure(parentFolderName) {
 
 export async function showHelp() {
   await printHelpText();
+}
+
+export async function showVersion() {
+  await printVersion();
 }
 
 export async function buildServices() {
