@@ -84,7 +84,21 @@
       ]
     }
   ],
-  "macroLocations": ["sas"],
-  "useMacroCore": true,
-  "buildFolders": ["services"]
+  "config": {
+    "useMacroCore": true,
+    "macroLocations": ["sas"],
+    "buildFolders": ["services"],
+    "targets": [
+      {
+        "deployScript": "myviyadeploy.sas",
+        "appLoc": "/Public/app",
+        "serverType": "SASVIYA"
+      },
+      {
+        "deployScript": "mysas9deploy.sas",
+        "appLoc": "/Public/app",
+        "serverType": "SAS9"
+      }
+    ]
+  }
 }
