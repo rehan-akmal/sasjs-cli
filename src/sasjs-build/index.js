@@ -71,12 +71,12 @@ async function createFinalSasFile(fileName, appLoc, serverType) {
 }
 
 async function getBuildConfig(appLoc, serverType) {
-  let buildConfig = `%let appLoc=${appLoc}; /* metadata or files service location of your app */\n`;
+  let buildConfig = "";
   const createWebServiceScript = await getCreateWebServiceScript(serverType);
   buildConfig += `${createWebServiceScript}\n`;
   const dependencyFilePaths = await getDependencyPaths(buildConfig);
   const dependenciesContent = await getDependencies(dependencyFilePaths);
-  return `${dependenciesContent}\n${buildConfig}\n`;
+  return `%let appLoc=${appLoc}; /* metadata or files service location of your app */\n${dependenciesContent}\n${buildConfig}\n`;
 }
 
 async function getCreateWebServiceScript(serverType) {
