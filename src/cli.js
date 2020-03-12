@@ -1,4 +1,9 @@
-import { createFileStructure, buildServices, showHelp } from "./main";
+import {
+  createFileStructure,
+  buildServices,
+  showHelp,
+  showVersion
+} from "./main";
 import chalk from "chalk";
 
 function parseCommand(rawArgs) {
@@ -38,6 +43,9 @@ export async function cli(args) {
       break;
     case "help":
       await showHelp();
+      break;
+    case "version":
+      await showVersion();
       break;
     default:
       showInvalidCommandText();
