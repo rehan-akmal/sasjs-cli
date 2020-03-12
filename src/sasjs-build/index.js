@@ -200,7 +200,7 @@ export async function getDependencyPaths(fileContent) {
       .filter(d => d.endsWith(".sas"));
     dependencies = [...new Set(dependencies)];
 
-    const dependencyPaths = [];
+    let dependencyPaths = [];
     const foundDependencies = [];
     await asyncForEach(sourcePaths, async sourcePath => {
       await asyncForEach(dependencies, async dep => {
@@ -223,10 +223,36 @@ export async function getDependencyPaths(fileContent) {
       );
     }
 
+    dependencyPaths = prioritiseDependencyOverrides(
+      dependencies,
+      dependencyPaths
+    );
+
     return [...new Set(dependencyPaths)];
   } else {
     return [];
   }
+}
+
+export function prioritiseDependencyOverrides(
+  dependencyNames,
+  dependencyPaths
+) {
+  dependencyNames.forEach(depFileName => {
+    const paths = dependencyPaths.filter(p => p.includes(depFileName));
+    const overriddenDependencyPath = paths.find(
+      p => !p.includes("node_modules")
+    );
+    if (overriddenDependencyPath) {
+      const pathToRemove = paths.find(p => p !== overriddenDependencyPath);
+      const index = dependencyPaths.indexOf(pathToRemove);
+      if (index > -1) {
+        dependencyPaths.splice(index, 1);
+      }
+    }
+  });
+
+  return dependencyPaths;
 }
 
 async function getBuildFolders(pathToFile) {
