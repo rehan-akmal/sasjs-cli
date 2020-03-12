@@ -1,6 +1,9 @@
 import path from "path";
 import { readFile } from "../src/utils/file-utils";
-import { getDependencyPaths } from "../src/sasjs-build/index";
+import {
+  getDependencyPaths,
+  prioritiseDependencyOverrides
+} from "../src/sasjs-build/index";
 
 describe("getDependencyPaths", () => {
   test("it should recursively get all dependency paths", async done => {
@@ -46,5 +49,19 @@ describe("getDependencyPaths", () => {
       expect(dependenciesList.some(x => dep.includes(x))).toBeTruthy();
     });
     done();
+  });
+
+  test("it should prioritise overridden dependencies", () => {
+    const dependencyNames = ["mf_abort.sas"];
+    const dependencyPaths = [
+      "node_modules/macrocore/core/mf_abort.sas",
+      "sas/macros/mf_abort.sas"
+    ];
+
+    const result = prioritiseDependencyOverrides(
+      dependencyNames,
+      dependencyPaths
+    );
+    expect(result).toEqual(["sas/macros/mf_abort.sas"]);
   });
 });
