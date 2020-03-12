@@ -5,7 +5,16 @@ export async function getConfiguration(pathToFile) {
   const config = await readFile(pathToFile);
   if (config) {
     const configJson = JSON.parse(config);
-    return Promise.resolve(configJson);
+    return Promise.resolve(configJson.config);
+  }
+  return Promise.reject();
+}
+
+export async function getFolders() {
+  const config = await readFile(path.join(__dirname, "../config.json"));
+  if (config) {
+    const configJson = JSON.parse(config);
+    return Promise.resolve(configJson.folders);
   }
   return Promise.reject();
 }
