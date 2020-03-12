@@ -103,9 +103,9 @@ async function getCreateWebServiceScript(serverType) {
 function getWebServiceScriptInvocation(serverType) {
   switch (serverType.toUpperCase()) {
     case "SASVIYA":
-      return "%mv_createwebservice(path=&appLoc/&path, name=&service, code=sasjs ,replace=yes)";
+      return "%mv_createwebservice(path=&appLoc/&path, name=&service, code=sascode ,replace=yes)";
     case "SAS9":
-      return "%mm_createwebservice(path=&appLoc/&path, name=&service, code=sasjs ,replace=yes)";
+      return "%mm_createwebservice(path=&appLoc/&path, name=&service, code=sascode ,replace=yes)";
     default:
       throw new Error(
         `Invalid server type: valid options are ${chalk.cyanBright(
@@ -159,9 +159,9 @@ function getServiceText(serviceFileName, fileContent, serverType) {
     }
   });
   return `%let service=${serviceName};
-filename sasjs temp lrecl=32767;
+filename sascode temp lrecl=32767;
 data _null_;
-file sasjs;
+file sascode;
 ${content}\n
 run;
 ${getWebServiceScriptInvocation(serverType)}
