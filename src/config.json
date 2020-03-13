@@ -104,7 +104,7 @@
       },
       {
         "deployScript": "mysas9deploy.sas",
-        "appLoc": "/Public/app",
+        "appLoc": "/User Folders/&sysuserid/My Folder",
         "serverType": "SAS9"
       }
     ]
