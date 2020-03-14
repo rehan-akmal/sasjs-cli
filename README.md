@@ -16,7 +16,9 @@ Command Line Interface for SASjs.
 
 ## Available Options
 
-- `create`: creates the folders and files specified in `file-structure.json`, in the current working directory.
+- `create`: creates the folders and files required for SAS development. You can use this command in two ways:
+  1. `sasjs create folderName` - which creates a new folder with the name specified.
+  2. `sasjs create` - which creates the files and folder in the current working directory. If this directory is an existing NPM project with a `package.json` file, this command adds `macrocore` to the list of dependencies in that file. Else, it will initialise a new NPM project and then install `macrocore`.
 - `build`: loads dependencies and builds services for SAS.
 - `help`: displays help text.
 - `version`: displays the currently installed version of SASjs CLI.
