@@ -9,7 +9,9 @@ export async function createFileStructure(parentFolderName) {
     .then(() =>
       console.log(
         chalk.greenBright.bold.italic(
-          `Project ${parentFolderName} created successfully.\nGet ready to Unleash your SAS!`
+          `Project ${
+            parentFolderName ? `${parentFolderName} created` : `updated`
+          } successfully.\nGet ready to Unleash your SAS!`
         )
       )
     )

@@ -1,17 +1,31 @@
 import shelljs from "shelljs";
 import chalk from "chalk";
+import path from "path";
+import { fileExists } from "./file-utils";
 
-export function initNpmProject(folderPath) {
-  return new Promise((resolve, _) => {
-    console.log(
-      chalk.greenBright(
-        "Initialising NPM project in",
-        chalk.cyanBright(folderPath)
-      )
-    );
-    shelljs.exec(`cd ${folderPath} && npm init --yes`, {
-      silent: true
-    });
+async function inExistingProject(folderPath) {
+  const packageJsonExists = await fileExists(
+    path.join(process.cwd(), folderPath, "package.json")
+  );
+  return packageJsonExists;
+}
+
+export async function setupNpmProject(folderPath) {
+  return new Promise(async (resolve, _) => {
+    const isExistingProject = await inExistingProject(folderPath);
+    if (!isExistingProject) {
+      console.log(
+        chalk.greenBright(
+          "Initialising NPM project in",
+          chalk.cyanBright(folderPath)
+        )
+      );
+      shelljs.exec(`cd ${folderPath} && npm init --yes`, {
+        silent: true
+      });
+    } else {
+      console.log(chalk.greenBright("Existing NPM project detected.\n"));
+    }
     console.log(chalk.greenBright("Installing MacroCore"));
     shelljs.exec(`cd ${folderPath} && npm i macrocore --save`, {
       silent: true

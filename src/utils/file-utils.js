@@ -4,7 +4,7 @@ import fsExtra from "fs-extra";
 import rimraf from "rimraf";
 import path from "path";
 
-export async function createFolderStructure(folder, parentFolderName = "") {
+export async function createFolderStructure(folder, parentFolderName = ".") {
   let folderPath = path.join(process.cwd(), folder.folderName);
   if (parentFolderName) {
     folderPath = path.join(process.cwd(), parentFolderName, folder.folderName);
@@ -42,6 +42,12 @@ export async function createFolderStructure(folder, parentFolderName = "") {
       await createFolderStructure(subFolder);
     });
   }
+}
+
+export async function fileExists(filePath) {
+  return new Promise((resolve, _) => {
+    fs.exists(filePath, exists => resolve(exists));
+  });
 }
 
 export async function readFile(fileName, debug = false) {
