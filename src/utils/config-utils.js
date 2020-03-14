@@ -38,7 +38,7 @@ export async function getBuildTargets() {
   const configuration = await getConfiguration(
     path.join(process.cwd(), "sas", "config.json")
   );
-  return configuration.targets;
+  return configuration.targets ? configuration.targets : [];
 }
 
 export function getMacroCorePath() {

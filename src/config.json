@@ -51,13 +51,13 @@
               "fileName": "yetanothermacro.sas",
               "content": "/**\n  @file yetanothermacro.sas\n  @brief Yet another example of a macro to be used in a service\n  @details  This macro is also great. Yadda yadda yadda. \n\n  <h4> Dependencies </h4>\n  @li doesnothing.sas\n\n**/\n\n%macro yetanothermacro();\n\nproc sort data= areas nodupkey;\n by area;\nrun;\n%doesnothing()\n\n%mend;\n"
             },
-             {
+            {
               "fileName": "doesnothing.sas",
               "content": "%macro doesnothing();\n%put check this, nothing happened!; \n%mend;\n"
             },
             {
               "fileName": "sasjsout.sas",
-              "content": "%macro sasjsout(type,fref=sasjs);\n%global sysprocessmode;\n%if "&sysprocessmode"="SAS Object Server" %then %do;\n  %if &type=HTML %then %do;\n    filename _webout filesrvc parenturi="&SYS_JES_JOB_URI" name="_webout.json"\n      contenttype="text/html";\n  %end;\n  %else %if &type=JS %then %do;\n    filename _webout filesrvc parenturi="&SYS_JES_JOB_URI" name='_webout.js'\n      contenttype='application/javascript';\n  %end;\n%end;\n%else %do;\n\n  %if &type=JS %then %do;\n    %let rc=%sysfunc(stpsrv_header(Content-type,application/javascript));\n  %end;\n%end;\ndata _null_;\n  infile &fref RECFM=N;\n  file _webout RECFM=N;\n  input string $CHAR1. @;\n  put string $CHAR1. @;\nrun;\n%mend;\n"
+              "content": "%macro sasjsout(type,fref=sasjs);\n%global sysprocessmode;\n%if \"&sysprocessmode\"=\"SAS Object Server\" %then %do;\n  %if &type=HTML %then %do;\n    filename _webout filesrvc parenturi=\"&SYS_JES_JOB_URI\" name=\"_webout.json\"\n      contenttype=\"text/html\";\n  %end;\n  %else %if &type=JS %then %do;\n    filename _webout filesrvc parenturi=\"&SYS_JES_JOB_URI\" name='_webout.js'\n      contenttype='application/javascript';\n  %end;\n%end;\n%else %do;\n\n  %if &type=JS %then %do;\n    %let rc=%sysfunc(stpsrv_header(Content-type,application/javascript));\n  %end;\n%end;\ndata _null_;\n  infile &fref RECFM=N;\n  file _webout RECFM=N;\n  input string $CHAR1. @;\n  put string $CHAR1. @;\nrun;\n%mend;\n"
             }
           ]
         },
@@ -104,12 +104,18 @@
       {
         "deployScript": "myviyadeploy.sas",
         "appLoc": "/Public/app",
-        "serverType": "SASVIYA"
+        "serverType": "SASVIYA",
+        "streamWeb": true,
+        "streamWebFolder": "webv",
+        "webSourcePath": ""
       },
       {
         "deployScript": "mysas9deploy.sas",
         "appLoc": "/User Folders/&sysuserid/My Folder",
-        "serverType": "SAS9"
+        "serverType": "SAS9",
+        "streamWeb": true,
+        "streamWebFolder": "web9",
+        "webSourcePath": ""
       }
     ]
   }

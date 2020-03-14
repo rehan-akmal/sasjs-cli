@@ -2,7 +2,8 @@ import {
   createFileStructure,
   buildServices,
   showHelp,
-  showVersion
+  showVersion,
+  buildWebApp
 } from "./main";
 import chalk from "chalk";
 
@@ -46,6 +47,9 @@ export async function cli(args) {
       break;
     case "version":
       await showVersion();
+      break;
+    case "web":
+      await buildWebApp();
       break;
     default:
       showInvalidCommandText();
