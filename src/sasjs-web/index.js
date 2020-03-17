@@ -74,7 +74,7 @@ export async function createWebAppServices(targets = []) {
       finalIndexHtml += `<body>${
         indexHtml.querySelector("body").innerHTML
       }</body></html>`;
-      await createClickMeService(finalIndexHtml, target.name);
+      await createClickMeService(finalIndexHtml);
     } else {
       throw new Error(
         "webSourcePath has not been specified. Please check your config and try again."
@@ -122,7 +122,7 @@ async function createTargetDestinationFolder(destinationPath) {
 
 async function getWebServiceContent(fileName, content) {
   const lines = content.split("\n");
-  let serviceContent = `${sasjsout}\nfilename ${fileName} temp lrecl=132006;
+  let serviceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;
 data _null_;
 file sasjs;
 `;
@@ -156,7 +156,7 @@ function chunk(text, maxLength = 120) {
   return text.match(new RegExp(".{1," + maxLength + "}", "g"));
 }
 
-async function createClickMeService(indexHtmlContent, buildTargetName) {
+async function createClickMeService(indexHtmlContent) {
   const lines = indexHtmlContent.split("\n");
   let clickMeServiceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;\ndata _null_;\nfile sasjs;\n`;
 
