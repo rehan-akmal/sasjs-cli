@@ -4,7 +4,8 @@ import {
   readFile,
   fileExists,
   createFolder,
-  createFile
+  createFile,
+  deleteFolder
 } from "../utils/file-utils";
 import path from "path";
 import chalk from "chalk";
@@ -34,7 +35,7 @@ export async function createWebAppServices(targets = []) {
       "services",
       target.streamWebFolder
     );
-    await createTargetDestinationFolder(target.streamWebFolder);
+    await createTargetDestinationFolder(destinationPath);
 
     if (webAppSourcePath) {
       const indexHtml = await readFile(
@@ -107,12 +108,12 @@ async function createBuildDestinationFolder() {
   }
 }
 
-async function createTargetDestinationFolder(name) {
-  const destinationPath = path.join(buildDestinationFolder, "services", name);
+async function createTargetDestinationFolder(destinationPath) {
   const pathExists = await fileExists(destinationPath);
-  if (!pathExists) {
-    await createFolder(destinationPath);
+  if (pathExists) {
+    await deleteFolder(destinationPath);
   }
+  await createFolder(destinationPath);
 }
 
 async function getWebServiceContent(fileName, content) {
@@ -160,7 +161,7 @@ async function createClickMeService(indexHtmlContent, buildTargetName) {
   });
   clickMeServiceContent += "run;\n%sasjsout(HTML)";
   await createFile(
-    path.join(buildDestinationFolder, "services", `clickme.${buildTargetName}`),
+    path.join(buildDestinationFolder, "services", "clickme.sas"),
     clickMeServiceContent
   );
 }

@@ -40,7 +40,7 @@ export async function cli(args) {
       await createFileStructure(command.parameters);
       break;
     case "build":
-      await buildServices();
+      await buildServices(command.parameters);
       break;
     case "help":
       await showHelp();

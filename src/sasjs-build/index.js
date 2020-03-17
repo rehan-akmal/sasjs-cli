@@ -21,7 +21,7 @@ import {
 
 const buildDestinationFolder = path.join(process.cwd(), "sasbuild");
 
-export async function build() {
+export async function build(targetName = null) {
   await copyFilesToBuildFolder();
   const buildFolders = await getBuildFolders(
     path.join(process.cwd(), "sas", "config.json")
@@ -46,33 +46,42 @@ export async function build() {
       });
     });
   });
-  await createFinalSasFiles();
+  await createFinalSasFiles(targetName);
 }
 
-async function createFinalSasFiles() {
+async function createFinalSasFiles(targetName) {
   const buildTargets = await getBuildTargets();
-  await asyncForEach(buildTargets, async target => {
-    const { deployScript, appLoc, serverType } = target;
-    if (target.streamWeb) {
-      await createWebAppServices([target])
-        .then(() =>
-          console.log(
-            chalk.greenBright.bold.italic(
-              `Web app services have been successfully built!`
-            )
+  let targetToBuild = buildTargets.find(t => t.name === targetName);
+  if (!targetToBuild) {
+    targetToBuild = buildTargets[0];
+    console.log(
+      chalk.yellowBright(
+        `No build target specified. Using ${chalk.cyanBright(
+          targetToBuild.name
+        )} by default.`
+      )
+    );
+  }
+  const { deployScript, appLoc, serverType, streamWeb } = targetToBuild;
+  if (streamWeb) {
+    await createWebAppServices([targetToBuild])
+      .then(() =>
+        console.log(
+          chalk.greenBright.bold.italic(
+            `Web app services have been successfully built!`
           )
         )
-        .catch(err => {
-          console.log(
-            chalk.redBright(
-              "An error has occurred when building web app services.",
-              err
-            )
-          );
-        });
-    }
-    await createFinalSasFile(deployScript, appLoc, serverType);
-  });
+      )
+      .catch(err => {
+        console.log(
+          chalk.redBright(
+            "An error has occurred when building web app services.",
+            err
+          )
+        );
+      });
+  }
+  await createFinalSasFile(deployScript, appLoc, serverType);
 }
 
 async function createFinalSasFile(fileName, appLoc, serverType) {

@@ -34,8 +34,8 @@ export async function showVersion() {
   await printVersion();
 }
 
-export async function buildServices() {
-  await build()
+export async function buildServices(targetName) {
+  await build(targetName)
     .then(() =>
       console.log(
         chalk.greenBright.bold.italic(
