@@ -1,6 +1,7 @@
 import find from "find";
 import path from "path";
 import chalk from "chalk";
+import { createWebAppServices } from "../sasjs-web";
 import {
   readFile,
   getSubFoldersInFolder,
@@ -50,9 +51,27 @@ export async function build() {
 
 async function createFinalSasFiles() {
   const buildTargets = await getBuildTargets();
-  asyncForEach(buildTargets, async target => {
+  await asyncForEach(buildTargets, async target => {
     const { deployScript, appLoc, serverType } = target;
-    createFinalSasFile(deployScript, appLoc, serverType);
+    if (target.streamWeb) {
+      await createWebAppServices([target])
+        .then(() =>
+          console.log(
+            chalk.greenBright.bold.italic(
+              `Web app services have been successfully built!`
+            )
+          )
+        )
+        .catch(err => {
+          console.log(
+            chalk.redBright(
+              "An error has occurred when building web app services.",
+              err
+            )
+          );
+        });
+    }
+    await createFinalSasFile(deployScript, appLoc, serverType);
   });
 }
 
