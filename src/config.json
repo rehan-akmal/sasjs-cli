@@ -102,6 +102,7 @@
     "buildFolders": ["services"],
     "targets": [
       {
+        "name": "viya",
         "deployScript": "myviyadeploy.sas",
         "appLoc": "/Public/app",
         "serverType": "SASVIYA",
@@ -110,6 +111,7 @@
         "webSourcePath": ""
       },
       {
+        "name": "sas9",
         "deployScript": "mysas9deploy.sas",
         "appLoc": "/User Folders/&sysuserid/My Folder",
         "serverType": "SAS9",
