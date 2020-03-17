@@ -50,25 +50,25 @@ export async function createWebAppServices(targets = []) {
         let content = "";
 
         if (isUrl) {
-          content = await fetch(scriptPath).then(r => r.text());
+          const scriptTag = `<script src="${scriptPath}"></script>`;
+          finalIndexHtml += `\n${scriptTag}`;
         } else {
           content = await readFile(
             path.join(process.cwd(), webAppSourcePath, scriptPath)
           );
+          const serviceContent = await getWebServiceContent(content);
+
+          await createFile(
+            path.join(destinationPath, `${fileName}.sas`),
+            serviceContent
+          );
+          const scriptTag = getScriptTag(
+            target.appLoc,
+            target.serverType,
+            fileName
+          );
+          finalIndexHtml += `\n${scriptTag}`;
         }
-
-        const serviceContent = await getWebServiceContent(fileName, content);
-
-        await createFile(
-          path.join(destinationPath, `${fileName}.sas`),
-          serviceContent
-        );
-        const scriptTag = getScriptTag(
-          target.appLoc,
-          target.serverType,
-          fileName
-        );
-        finalIndexHtml += `\n${scriptTag}`;
       });
       finalIndexHtml += "</head>";
       finalIndexHtml += `<body>${
@@ -120,8 +120,8 @@ async function createTargetDestinationFolder(destinationPath) {
   await createFolder(destinationPath);
 }
 
-async function getWebServiceContent(fileName, content) {
-  const lines = content.split("\n").filter(l => !!!l);
+async function getWebServiceContent(content) {
+  const lines = content.split("\n").filter(l => !!l);
   let serviceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;
 data _null_;
 file sasjs;
@@ -153,9 +153,7 @@ function chunk(text, maxLength = 120) {
   if (text.length <= maxLength) {
     return [text];
   }
-  return text
-    .match(new RegExp(".{1," + maxLength + "}", "g"))
-    .filter(m => !!!m);
+  return text.match(new RegExp(".{1," + maxLength + "}", "g")).filter(m => !!m);
 }
 
 async function createClickMeService(indexHtmlContent) {
