@@ -89,13 +89,13 @@ export async function createWebAppServices(targets = []) {
             path.join(destinationPath, `${fileName}.sas`),
             serviceContent
           );
-          const scriptTag = getScriptTag(
+          const linkTag = getLinkTag(
             target.appLoc,
             target.serverType,
             target.streamWebFolder,
             fileName
           );
-          finalIndexHtml += `\n${scriptTag}`;
+          finalIndexHtml += `\n${linkTag}`;
         }
       });
       finalIndexHtml += "</head>";
@@ -121,6 +121,20 @@ function getScriptTag(appLoc, serverType, streamWebFolder, fileName) {
       ? `/SASJobExecution?_PROGRAM=${appLoc}/${streamWebFolder}`
       : `/SASStoredProcess/?_PROGRAM=${appLoc}/${streamWebFolder}`;
   return `<script src="${storedProcessPath}/${fileName}"></script>`;
+}
+
+function getLinkTag(appLoc, serverType, streamWebFolder, fileName) {
+  const permittedServerTypes = ["SAS9", "SASVIYA"];
+  if (!permittedServerTypes.includes(serverType.toUpperCase())) {
+    throw new Error(
+      "Unsupported server type. Supported types are SAS9 and SASVIYA"
+    );
+  }
+  const storedProcessPath =
+    serverType === "SASVIYA"
+      ? `/SASJobExecution?_PROGRAM=${appLoc}/${streamWebFolder}`
+      : `/SASStoredProcess/?_PROGRAM=${appLoc}/${streamWebFolder}`;
+  return `<link rel="stylesheet" href="${storedProcessPath}/${fileName}" />`;
 }
 
 function getScriptPaths(parsedHtml) {
