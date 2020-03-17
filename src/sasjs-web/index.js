@@ -129,11 +129,11 @@ file sasjs;
   lines.forEach(line => {
     const chunkedLines = chunk(line);
     if (chunkedLines.length === 1) {
-      serviceContent += `put '${chunkedLines[0]}';\n`;
+      serviceContent += `put '${chunkedLines[0].split("'").join("''")}';\n`;
     } else {
       let combinedLines = "";
       chunkedLines.forEach((chunkedLine, index) => {
-        let text = `put '${chunkedLine}'`;
+        let text = `put '${chunkedLine.split("'").join("''")}'`;
         if (index !== chunkedLines.length - 1) {
           text += "@;\n";
         } else {
