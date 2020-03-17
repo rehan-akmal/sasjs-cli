@@ -29,7 +29,7 @@ export async function createWebAppServices(targets = []) {
     console.log(
       chalk.greenBright(`Building for target ${chalk.cyanBright(target.name)}`)
     );
-    const webAppSourcePath = await target.webSourcePath;
+    const webAppSourcePath = target.webSourcePath;
     const destinationPath = path.join(
       buildDestinationFolder,
       "services",
