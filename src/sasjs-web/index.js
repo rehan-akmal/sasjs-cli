@@ -111,11 +111,33 @@ data _null_;
 file sasjs;
 `;
   lines.forEach(line => {
-    serviceContent += `put '${line}';\n`;
+    const chunkedLines = chunk(line);
+    if (chunkedLines.length === 1) {
+      serviceContent += `put '${chunkedLines[0]}';\n`;
+    } else {
+      let combinedLines = "";
+      chunkedLines.forEach((chunkedLine, index) => {
+        let text = `put '${chunkedLine}'`;
+        if (index !== chunkedLines.length - 1) {
+          text += "@;\n";
+        } else {
+          text += ";\n";
+        }
+        combinedLines += text;
+      });
+      serviceContent += combinedLines;
+    }
   });
 
   serviceContent += "\nrun;\n%sasjsout(JS)";
   return serviceContent;
+}
+
+function chunk(text, maxLength = 120) {
+  if (text.length <= maxLength) {
+    return [text];
+  }
+  return text.match(new RegExp(".{1," + maxLength + "}", "g"));
 }
 
 async function createClickMeService(indexHtmlContent, buildTargetName) {
