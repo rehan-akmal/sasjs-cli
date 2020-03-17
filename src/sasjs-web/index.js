@@ -121,7 +121,7 @@ async function createTargetDestinationFolder(destinationPath) {
 }
 
 async function getWebServiceContent(fileName, content) {
-  const lines = content.split("\n");
+  const lines = content.split("\n").filter(l => !!!l);
   let serviceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;
 data _null_;
 file sasjs;
@@ -153,7 +153,9 @@ function chunk(text, maxLength = 120) {
   if (text.length <= maxLength) {
     return [text];
   }
-  return text.match(new RegExp(".{1," + maxLength + "}", "g"));
+  return text
+    .match(new RegExp(".{1," + maxLength + "}", "g"))
+    .filter(m => !!!m);
 }
 
 async function createClickMeService(indexHtmlContent) {
