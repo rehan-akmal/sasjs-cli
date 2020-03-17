@@ -27,10 +27,6 @@
           "folderName": "build",
           "files": [
             {
-              "fileName": "buildinit.sas",
-              "content": "/**\n  @file buildinit.sas\n  @brief this file is executed at the start of the SAS build\n  @details  This file is included at the start of the build, *after* the macros\n    and *before* the service definitions. If you are using SAS 9, you \n    should use the `mm_createwebservice.sas` macro, and \n    if you are using SAS Viya you should use `mv_createwebservice.sas`. \n\n  <h4> Dependencies </h4>\n  @li mm_createwebservice.sas\n\n**/\n\n%let appLoc=/Public/sasjs_cli; /* metadata or files service location of your app */\n%let sastype=SAS9;/* should be SAS9 or SASVIYA*/\n\n\n/* do not modify below this line*/\n%let type=m;\ndata _null_;\nif symexist('sastype') then do;\nif upcase(symget('sastype'))='SASVIYA' then do;\ncall symputx('type','v');\nend;\nend;run;"
-            },
-            {
               "fileName": "serviceinit.sas",
               "content": "/**\n  @file serviceinit.sas\n  @brief this file is called with every service\n  @details  This file is included in *every* service, *after* the macros and *before* the service code.\n\n  <h4> Dependencies </h4>\n  @li mf_abort.sas\n\n**/\n\n%put service is starting!!;"
             },
@@ -54,10 +50,6 @@
             {
               "fileName": "doesnothing.sas",
               "content": "%macro doesnothing();\n%put check this, nothing happened!; \n%mend;\n"
-            },
-            {
-              "fileName": "sasjsout.sas",
-              "content": "%macro sasjsout(type,fref=sasjs);\n%global sysprocessmode;\n%if \"&sysprocessmode\"=\"SAS Object Server\" %then %do;\n  %if &type=HTML %then %do;\n    filename _webout filesrvc parenturi=\"&SYS_JES_JOB_URI\" name=\"_webout.json\"\n      contenttype=\"text/html\";\n  %end;\n  %else %if &type=JS %then %do;\n    filename _webout filesrvc parenturi=\"&SYS_JES_JOB_URI\" name='_webout.js'\n      contenttype='application/javascript';\n  %end;\n%end;\n%else %do;\n\n  %if &type=JS %then %do;\n    %let rc=%sysfunc(stpsrv_header(Content-type,application/javascript));\n  %end;\n%end;\ndata _null_;\n  infile &fref RECFM=N;\n  file _webout RECFM=N;\n  input string $CHAR1. @;\n  put string $CHAR1. @;\nrun;\n%mend;\n"
             }
           ]
         },
@@ -83,7 +75,7 @@
                 },
                 {
                   "fileName": "getdata.sas",
-                  "content": "/**\n  @file getdata.sas\n  @brief Get Data service - runs on app startup\n  @details  This is always the first service called when the app is opened.\n\n  <h4> Dependencies </h4>\n\n**/\n\nproc sql;\ncreate table forexample as select * from sashelp.springs\n  where area in (select area from areas);\n\n%webout(OPEN)\n%webout(OBJ,springs)\n%webout(CLOSE)\n"
+                  "content": "/**\n  @file getdata.sas\n  @brief Get Data service - runs on app startup\n  @details  This is always the first service called when the app is opened.\n\n  <h4> Dependencies </h4>\n\n**/\n\nproc sql;\ncreate table springs as select * from sashelp.springs\n  where area in (select area from areas);\n\n%webout(OPEN)\n%webout(OBJ,springs)\n%webout(CLOSE)\n"
                 },
                 {
                   "fileName": "example.sas",
@@ -106,18 +98,18 @@
         "deployScript": "myviyadeploy.sas",
         "appLoc": "/Public/app",
         "serverType": "SASVIYA",
-        "streamWeb": true,
+        "streamWeb": false,
         "streamWebFolder": "webv",
-        "webSourcePath": ""
+        "webSourcePath": "dist"
       },
       {
         "name": "sas9",
         "deployScript": "mysas9deploy.sas",
         "appLoc": "/User Folders/&sysuserid/My Folder",
         "serverType": "SAS9",
-        "streamWeb": true,
+        "streamWeb": false,
         "streamWebFolder": "web9",
-        "webSourcePath": ""
+        "webSourcePath": "dist"
       }
     ]
   }
