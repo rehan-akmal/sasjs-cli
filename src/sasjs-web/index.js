@@ -71,34 +71,34 @@ export async function createWebAppServices(targets = []) {
           finalIndexHtml += `\n${scriptTag}`;
         }
       });
-      // const styleSheetPaths = getStyleSheetPaths(indexHtml);
-      // await asyncForEach(styleSheetPaths, async styleSheetPath => {
-      //   const isUrl = styleSheetPath.startsWith("http");
-      //   const fileName = `${path.basename(styleSheetPath).replace(/\./g, "")}`;
-      //   let content = "";
+      const styleSheetPaths = getStyleSheetPaths(indexHtml);
+      await asyncForEach(styleSheetPaths, async styleSheetPath => {
+        const isUrl = styleSheetPath.startsWith("http");
+        const fileName = `${path.basename(styleSheetPath).replace(/\./g, "")}`;
+        let content = "";
 
-      //   if (isUrl) {
-      //     const linkTag = `<link rel="stylesheet" href="${styleSheetPath}" />`;
-      //     finalIndexHtml += `\n${linkTag}`;
-      //   } else {
-      //     content = await readFile(
-      //       path.join(process.cwd(), webAppSourcePath, styleSheetPath)
-      //     );
-      //     const serviceContent = await getWebServiceContent(content);
+        if (isUrl) {
+          const linkTag = `<link rel="stylesheet" href="${styleSheetPath}" />`;
+          finalIndexHtml += `\n${linkTag}`;
+        } else {
+          content = await readFile(
+            path.join(process.cwd(), webAppSourcePath, styleSheetPath)
+          );
+          const serviceContent = await getWebServiceContent(content, "CSS");
 
-      //     await createFile(
-      //       path.join(destinationPath, `${fileName}.sas`),
-      //       serviceContent
-      //     );
-      //     const scriptTag = getScriptTag(
-      //       target.appLoc,
-      //       target.serverType,
-      //       target.streamWebFolder,
-      //       fileName
-      //     );
-      //     finalIndexHtml += `\n${scriptTag}`;
-      //   }
-      // });
+          await createFile(
+            path.join(destinationPath, `${fileName}.sas`),
+            serviceContent
+          );
+          const scriptTag = getScriptTag(
+            target.appLoc,
+            target.serverType,
+            target.streamWebFolder,
+            fileName
+          );
+          finalIndexHtml += `\n${scriptTag}`;
+        }
+      });
       finalIndexHtml += "</head>";
       finalIndexHtml += `<body>${
         indexHtml.querySelector("body").innerHTML
@@ -158,7 +158,7 @@ async function createTargetDestinationFolder(destinationPath) {
   await createFolder(destinationPath);
 }
 
-async function getWebServiceContent(content) {
+async function getWebServiceContent(content, type = "JS") {
   const lines = content.split("\n").filter(l => !!l);
   let serviceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;
 data _null_;
@@ -183,7 +183,7 @@ file sasjs;
     }
   });
 
-  serviceContent += "\nrun;\n%sasjsout(JS)";
+  serviceContent += `\nrun;\n%sasjsout(${type})`;
   return serviceContent;
 }
 
