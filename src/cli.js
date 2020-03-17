@@ -11,9 +11,47 @@ function parseCommand(rawArgs) {
   checkNodeVersion();
   const args = rawArgs.slice(2);
   if (args.length) {
-    return { name: args[0], parameters: args[1] };
+    const name = getUnaliasedCommand(args[0]);
+    return { name, parameters: args[1] };
   }
   return null;
+}
+
+function getUnaliasedCommand(command) {
+  if (
+    command === "version" ||
+    command === "--version" ||
+    command === "-version" ||
+    command === "-v" ||
+    command === "--v" ||
+    command === "v"
+  ) {
+    return "version";
+  }
+
+  if (
+    command === "help" ||
+    command === "--help" ||
+    command === "-help" ||
+    command === "-h" ||
+    command === "--h" ||
+    command === "h"
+  ) {
+    return "help";
+  }
+
+  if (command === "create" || command === "c") {
+    return "create";
+  }
+
+  if (command === "build" || command === "b") {
+    return "build";
+  }
+  if (command === "web" || command === "w") {
+    return "web";
+  }
+
+  return commandName;
 }
 
 function checkNodeVersion() {
