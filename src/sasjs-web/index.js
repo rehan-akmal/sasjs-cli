@@ -7,16 +7,27 @@ import {
   createFile
 } from "../utils/file-utils";
 import path from "path";
+import chalk from "chalk";
 import { parse } from "node-html-parser";
 import fetch from "node-fetch";
 import { sasjsout } from "./sasjsout";
 
 const buildDestinationFolder = path.join(process.cwd(), "sasbuild");
 
-export async function createWebAppServices() {
+export async function createWebAppServices(targets = []) {
+  console.log(chalk.greenBright("Building web app services..."));
   await createBuildDestinationFolder();
-  const buildTargets = await getBuildTargets();
+  let buildTargets = [];
+  if (!targets.length) {
+    buildTargets = await getBuildTargets();
+  } else {
+    buildTargets = [...targets];
+  }
+
   await asyncForEach(buildTargets, async target => {
+    console.log(
+      chalk.greenBright(`Building for target ${chalk.cyanBright(target.name)}`)
+    );
     const webAppSourcePath = await target.webSourcePath;
     const destinationPath = path.join(
       buildDestinationFolder,
