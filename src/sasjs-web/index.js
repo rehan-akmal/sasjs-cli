@@ -20,6 +20,7 @@ export async function createWebAppServices() {
     const webAppSourcePath = await target.webSourcePath;
     const destinationPath = path.join(
       buildDestinationFolder,
+      "services",
       target.streamWebFolder
     );
     await createTargetDestinationFolder(target.streamWebFolder);
@@ -96,7 +97,7 @@ async function createBuildDestinationFolder() {
 }
 
 async function createTargetDestinationFolder(name) {
-  const destinationPath = path.join(buildDestinationFolder, name);
+  const destinationPath = path.join(buildDestinationFolder, "services", name);
   const pathExists = await fileExists(destinationPath);
   if (!pathExists) {
     await createFolder(destinationPath);
