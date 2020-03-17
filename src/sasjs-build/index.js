@@ -159,13 +159,13 @@ function getServiceText(serviceFileName, fileContent, serverType) {
     }
   });
   return `%let service=${serviceName};
-filename sascode;
 filename sascode temp lrecl=32767;
 data _null_;
 file sascode;
 ${content}\n
 run;
 ${getWebServiceScriptInvocation(serverType)}
+filename sascode clear;
 `;
 }
 
