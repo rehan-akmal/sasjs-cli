@@ -65,6 +65,7 @@ export async function createWebAppServices(targets = []) {
           const scriptTag = getScriptTag(
             target.appLoc,
             target.serverType,
+            target.streamWebFolder,
             fileName
           );
           finalIndexHtml += `\n${scriptTag}`;
@@ -83,7 +84,7 @@ export async function createWebAppServices(targets = []) {
   });
 }
 
-function getScriptTag(appLoc, serverType, fileName) {
+function getScriptTag(appLoc, serverType, streamWebFolder, fileName) {
   const permittedServerTypes = ["SAS9", "SASVIYA"];
   if (!permittedServerTypes.includes(serverType.toUpperCase())) {
     throw new Error(
@@ -92,8 +93,8 @@ function getScriptTag(appLoc, serverType, fileName) {
   }
   const storedProcessPath =
     serverType === "SASVIYA"
-      ? `/SASJobExecution?_PROGRAM=${appLoc}/web`
-      : `/SASStoredProcess?_PROGRAM=${appLoc}/web`;
+      ? `/SASJobExecution?_PROGRAM=${appLoc}/${streamWebFolder}`
+      : `/SASStoredProcess?_PROGRAM=${appLoc}/${streamWebFolder}`;
   return `<script src="${storedProcessPath}/${fileName}"></script>`;
 }
 
