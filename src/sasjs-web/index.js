@@ -9,6 +9,7 @@ import {
 import path from "path";
 import { parse } from "node-html-parser";
 import fetch from "node-fetch";
+import { sasjsout } from "./sasjsout";
 
 const buildDestinationFolder = path.join(process.cwd(), "sasbuild");
 
@@ -27,7 +28,7 @@ export async function createWebAppServices() {
       const indexHtml = await readFile(
         path.join(process.cwd(), webAppSourcePath, "index.html")
       ).then(parse);
-      let finalIndexHtml = "<!DOCTYPE html>\n<html>\n";
+      let finalIndexHtml = "<!DOCTYPE html>\n<html>\n<head>";
 
       const scriptPaths = getScriptPaths(indexHtml);
       await asyncForEach(scriptPaths, async scriptPath => {
@@ -49,9 +50,34 @@ export async function createWebAppServices() {
           path.join(destinationPath, `${fileName}.sas`),
           serviceContent
         );
+        const scriptTag = getScriptTag(
+          target.appLoc,
+          target.serverType,
+          fileName
+        );
+        finalIndexHtml += `\n${scriptTag}`;
       });
+      finalIndexHtml += "</head>";
+      finalIndexHtml += `<body>${
+        indexHtml.querySelector("body").innerHTML
+      }</body></html>`;
+      await createClickMeService(finalIndexHtml, target.name);
     }
   });
+}
+
+function getScriptTag(appLoc, serverType, fileName) {
+  const permittedServerTypes = ["SAS9", "SASVIYA"];
+  if (!permittedServerTypes.includes(serverType.toUpperCase())) {
+    throw new Error(
+      "Unsupported server type. Supported types are SAS9 and SASVIYA"
+    );
+  }
+  const storedProcessPath =
+    serverType === "SASVIYA"
+      ? `/SASJobExecution?_PROGRAM=${appLoc}/web`
+      : `/SASStoredProcess?_PROGRAM=${appLoc}/web`;
+  return `<script src="${storedProcessPath}/${fileName}"></script>`;
 }
 
 function getScriptPaths(parsedHtml) {
@@ -83,10 +109,32 @@ async function getWebServiceContent(fileName, content) {
 data _null_;
 file sasjs;
 `;
+  const sasjsOutLines = sasjsout.split("\n");
+  sasjsOutLines.forEach(line => {
+    serviceContent += `put '${line}';\n`;
+  });
   lines.forEach(line => {
     serviceContent += `put '${line}';\n`;
   });
 
   serviceContent += "\nrun;\n%sasjsout(JS)";
   return serviceContent;
+}
+
+async function createClickMeService(indexHtmlContent, buildTargetName) {
+  const lines = indexHtmlContent.split("\n");
+  const sasjsOutLines = sasjsout.split("\n");
+  let clickMeServiceContent =
+    "filename sasjs temp lrecl=132006;\ndata _null_;\nfile sasjs;\n";
+  sasjsOutLines.forEach(line => {
+    clickMeServiceContent += `put '${line}';\n`;
+  });
+  lines.forEach(line => {
+    clickMeServiceContent += `put '${line}';\n`;
+  });
+  clickMeServiceContent += "run;\n%sasjsout(HTML)";
+  await createFile(
+    path.join(buildDestinationFolder, "services", `clickme.${buildTargetName}`),
+    clickMeServiceContent
+  );
 }
