@@ -75,6 +75,10 @@ export async function createWebAppServices(targets = []) {
         indexHtml.querySelector("body").innerHTML
       }</body></html>`;
       await createClickMeService(finalIndexHtml, target.name);
+    } else {
+      throw new Error(
+        "webSourcePath has not been specified. Please check your config and try again."
+      );
     }
   });
 }
