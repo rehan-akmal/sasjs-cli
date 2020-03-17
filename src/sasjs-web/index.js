@@ -42,31 +42,37 @@ export async function createWebAppServices(targets = []) {
       ).then(parse);
       let finalIndexHtml = "<!DOCTYPE html>\n<html>\n<head>";
 
-      const scriptPaths = getScriptPaths(indexHtml);
-      await asyncForEach(scriptPaths, async scriptPath => {
-        const isUrl = scriptPath.startsWith("http");
-        const fileName = `${path.basename(scriptPath).replace(/\./g, "")}`;
-        let content = "";
+      const scriptTags = getScriptTags(indexHtml);
+      await asyncForEach(scriptTags, async tag => {
+        const scriptPath = tag.getAttribute("src");
+        const isUrl = scriptPath && scriptPath.startsWith("http");
 
-        if (isUrl) {
-          const scriptTag = `<script src="${scriptPath}"></script>`;
-          finalIndexHtml += `\n${scriptTag}`;
+        if (scriptPath) {
+          const fileName = `${path.basename(scriptPath).replace(/\./g, "")}`;
+          let content = "";
+          if (isUrl) {
+            const scriptTag = `<script src="${scriptPath}"></script>`;
+            finalIndexHtml += `\n${scriptTag}`;
+          } else {
+            content = await readFile(
+              path.join(process.cwd(), webAppSourcePath, scriptPath)
+            );
+            const serviceContent = await getWebServiceContent(content);
+
+            await createFile(
+              path.join(destinationPath, `${fileName}.sas`),
+              serviceContent
+            );
+            const scriptTag = getScriptTag(
+              target.appLoc,
+              target.serverType,
+              target.streamWebFolder,
+              fileName
+            );
+            finalIndexHtml += `\n${scriptTag}`;
+          }
         } else {
-          content = await readFile(
-            path.join(process.cwd(), webAppSourcePath, scriptPath)
-          );
-          const serviceContent = await getWebServiceContent(content);
-
-          await createFile(
-            path.join(destinationPath, `${fileName}.sas`),
-            serviceContent
-          );
-          const scriptTag = getScriptTag(
-            target.appLoc,
-            target.serverType,
-            target.streamWebFolder,
-            fileName
-          );
+          const scriptTag = `<script>${tag.innerText}</script>`;
           finalIndexHtml += `\n${scriptTag}`;
         }
       });
@@ -137,12 +143,8 @@ function getLinkTag(appLoc, serverType, streamWebFolder, fileName) {
   return `<link rel="stylesheet" href="${storedProcessPath}/${fileName}" />`;
 }
 
-function getScriptPaths(parsedHtml) {
-  const scriptSources = parsedHtml
-    .querySelectorAll("script")
-    .map(s => s.getAttribute("src"));
-
-  return scriptSources;
+function getScriptTags(parsedHtml) {
+  return parsedHtml.querySelectorAll("script");
 }
 
 function getStyleSheetPaths(parsedHtml) {
