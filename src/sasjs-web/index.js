@@ -106,14 +106,10 @@ async function createTargetDestinationFolder(name) {
 
 async function getWebServiceContent(fileName, content) {
   const lines = content.split("\n");
-  let serviceContent = `filename ${fileName} temp lrecl=132006;
+  let serviceContent = `${sasjsout}\nfilename ${fileName} temp lrecl=132006;
 data _null_;
 file sasjs;
 `;
-  const sasjsOutLines = sasjsout.split("\n");
-  sasjsOutLines.forEach(line => {
-    serviceContent += `put '${line}';\n`;
-  });
   lines.forEach(line => {
     serviceContent += `put '${line}';\n`;
   });
@@ -124,12 +120,8 @@ file sasjs;
 
 async function createClickMeService(indexHtmlContent, buildTargetName) {
   const lines = indexHtmlContent.split("\n");
-  const sasjsOutLines = sasjsout.split("\n");
-  let clickMeServiceContent =
-    "filename sasjs temp lrecl=132006;\ndata _null_;\nfile sasjs;\n";
-  sasjsOutLines.forEach(line => {
-    clickMeServiceContent += `put '${line}';\n`;
-  });
+  let clickMeServiceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;\ndata _null_;\nfile sasjs;\n`;
+
   lines.forEach(line => {
     clickMeServiceContent += `put '${line}';\n`;
   });
