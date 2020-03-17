@@ -10,7 +10,6 @@ import {
 import path from "path";
 import chalk from "chalk";
 import { parse } from "node-html-parser";
-import fetch from "node-fetch";
 import { sasjsout } from "./sasjsout";
 
 const buildDestinationFolder = path.join(process.cwd(), "sasbuild");
@@ -100,9 +99,7 @@ export async function createWebAppServices(targets = []) {
         }
       });
       finalIndexHtml += "</head>";
-      finalIndexHtml += `<body>${
-        indexHtml.querySelector("body").innerHTML
-      }</body></html>`;
+      finalIndexHtml += `${indexHtml.querySelector("body")}</html>`;
       await createClickMeService(finalIndexHtml);
     } else {
       throw new Error(
