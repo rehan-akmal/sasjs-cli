@@ -71,6 +71,34 @@ export async function createWebAppServices(targets = []) {
           finalIndexHtml += `\n${scriptTag}`;
         }
       });
+      // const styleSheetPaths = getStyleSheetPaths(indexHtml);
+      // await asyncForEach(styleSheetPaths, async styleSheetPath => {
+      //   const isUrl = styleSheetPath.startsWith("http");
+      //   const fileName = `${path.basename(styleSheetPath).replace(/\./g, "")}`;
+      //   let content = "";
+
+      //   if (isUrl) {
+      //     const linkTag = `<link rel="stylesheet" href="${styleSheetPath}" />`;
+      //     finalIndexHtml += `\n${linkTag}`;
+      //   } else {
+      //     content = await readFile(
+      //       path.join(process.cwd(), webAppSourcePath, styleSheetPath)
+      //     );
+      //     const serviceContent = await getWebServiceContent(content);
+
+      //     await createFile(
+      //       path.join(destinationPath, `${fileName}.sas`),
+      //       serviceContent
+      //     );
+      //     const scriptTag = getScriptTag(
+      //       target.appLoc,
+      //       target.serverType,
+      //       target.streamWebFolder,
+      //       fileName
+      //     );
+      //     finalIndexHtml += `\n${scriptTag}`;
+      //   }
+      // });
       finalIndexHtml += "</head>";
       finalIndexHtml += `<body>${
         indexHtml.querySelector("body").innerHTML
@@ -94,7 +122,7 @@ function getScriptTag(appLoc, serverType, streamWebFolder, fileName) {
   const storedProcessPath =
     serverType === "SASVIYA"
       ? `/SASJobExecution?_PROGRAM=${appLoc}/${streamWebFolder}`
-      : `/SASStoredProcess?_PROGRAM=${appLoc}/${streamWebFolder}`;
+      : `/SASStoredProcess/?_PROGRAM=${appLoc}/${streamWebFolder}`;
   return `<script src="${storedProcessPath}/${fileName}"></script>`;
 }
 
@@ -104,6 +132,15 @@ function getScriptPaths(parsedHtml) {
     .map(s => s.getAttribute("src"));
 
   return scriptSources;
+}
+
+function getStyleSheetPaths(parsedHtml) {
+  const styleSheetUrls = parsedHtml
+    .querySelectorAll("link")
+    .filter(s => s.getAttribute("rel") === "stylesheet")
+    .map(s => s.getAttribute("href"));
+
+  return styleSheetUrls;
 }
 
 async function createBuildDestinationFolder() {
