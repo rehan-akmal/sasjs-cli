@@ -172,7 +172,10 @@ async function createTargetDestinationFolder(destinationPath) {
 }
 
 async function getWebServiceContent(content, type = "JS") {
-  const lines = content.split("\n").filter(l => !!l);
+  const lines = content
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .filter(l => !!l);
   let serviceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;
 data _null_;
 file sasjs;
@@ -208,7 +211,7 @@ function chunk(text, maxLength = 120) {
 }
 
 async function createClickMeService(indexHtmlContent) {
-  const lines = indexHtmlContent.split("\n");
+  const lines = indexHtmlContent.replace(/\r\n/g, "\n").split("\n");
   let clickMeServiceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;\ndata _null_;\nfile sasjs;\n`;
 
   lines.forEach(line => {
