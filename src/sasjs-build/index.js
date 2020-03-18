@@ -198,7 +198,10 @@ filename sascode clear;
 }
 
 function getLines(text) {
-  let lines = text.split("\n").map(l => l.trim());
+  let lines = text
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map(l => l.trim());
   return lines;
 }
 
@@ -272,6 +275,7 @@ export async function getDependencyPaths(fileContent) {
   if (dependenciesStart.length > 1) {
     let dependencies = dependenciesStart[1]
       .split("**/")[0]
+      .replace(/\r\n/g, "\n")
       .split("\n")
       .filter(d => !!d)
       .map(d => d.replace(/\@li/g, "").replace(/ /g, ""))
