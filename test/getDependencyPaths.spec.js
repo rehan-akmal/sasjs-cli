@@ -23,6 +23,38 @@ describe("getDependencyPaths", () => {
     done();
   });
 
+  test("it should get third level dependencies", async done => {
+    const fileContent = await readFile(
+      path.join(__dirname, "./nested-deps.sas")
+    );
+    const dependenciesList = [
+      "mm_createwebservice.sas",
+      "mm_createstp.sas",
+      "mm_getwebappsrvprops.sas",
+      "mf_getuser.sas",
+      "mm_createfolder.sas",
+      "mm_deletestp.sas",
+      "mf_nobs.sas",
+      "mf_getattrn.sas",
+      "mf_abort.sas",
+      "mf_verifymacvars.sas",
+      "mm_getdirectories.sas",
+      "mm_updatestpsourcecode.sas",
+      "mp_dropmembers.sas",
+      "mm_getservercontexts.sas",
+      "mm_getrepos.sas"
+    ];
+    const dependencyPaths = await getDependencyPaths(fileContent);
+    dependencyPaths.forEach(dep => {
+      console.log(
+        dep,
+        dependenciesList.some(x => dep.includes(x))
+      );
+      expect(dependenciesList.some(x => dep.includes(x))).toBeTruthy();
+    });
+    done();
+  });
+
   test("it should throw an error when a dependency is not found", async done => {
     const fileContent = await readFile(
       path.join(__dirname, "./missing-dependency.sas")
