@@ -38,7 +38,7 @@
     "@babel/preset-env": "^7.8.7",
     "babel-jest": "^25.1.0",
     "jest-cli": "^25.1.0",
-    "macrocore": "^1.5.2",
+    "macrocore": "^1.7.0",
     "semantic-release": "^17.0.4"
   }
 }
