@@ -79,7 +79,7 @@
                 },
                 {
                   "fileName": "example.sas",
-                  "content": "/**\n  @file example.sas\n  @brief example service - for example \n  @details  This is a longer description.\n\n  <h4> Dependencies </h4>\n  @li examplemacro.sas\n  @li yetanothermacro.sas\n\n**/\n\n\n%examplemacro()\n%yetanothermacro()\n\n%webout(OPEN)\n%webout(OBJ,areas)\n%webout(CLOSE)\n"
+                  "content": "/**\n  @file example.sas\n  @brief example service - for example \n  @details  This is a longer description.\n\n  <h4> Dependencies </h4>\n  @li mf_nobs.sas\n  @li examplemacro.sas\n  @li yetanothermacro.sas\n\n**/\n\n%put %mf_nobs(sashelp.class);\n\n%examplemacro()\n%yetanothermacro()\n\n%webout(OPEN)\n%webout(OBJ,areas)\n%webout(CLOSE)\n"
                 }
               ]
             }
