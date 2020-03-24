@@ -25,12 +25,13 @@
   },
   "homepage": "https://github.com/macropeople/sasjs-cli",
   "dependencies": {
+    "base64-img": "^1.0.4",
     "chalk": "^3.0.0",
     "esm": "^3.2.25",
     "find": "^0.3.0",
     "fs": "0.0.1-security",
     "fs-extra": "^9.0.0",
-    "node-html-parser": "^1.2.13",
+    "jsdom": "^16.2.1",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.3"
   },

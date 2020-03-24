@@ -9,7 +9,8 @@ import {
 } from "../utils/file-utils";
 import path from "path";
 import chalk from "chalk";
-import { parse } from "node-html-parser";
+import jsdom from "jsdom";
+import base64img from "base64-img";
 import { sasjsout } from "./sasjsout";
 
 const buildDestinationFolder = path.join(process.cwd(), "sasbuild");
@@ -39,74 +40,34 @@ export async function createWebAppServices(targets = []) {
     if (webAppSourcePath) {
       const indexHtml = await readFile(
         path.join(process.cwd(), webAppSourcePath, "index.html")
-      ).then(parse);
-      let finalIndexHtml = "<!DOCTYPE html>\n<html>\n<head>";
+      ).then(content => new jsdom.JSDOM(content));
 
       const scriptTags = getScriptTags(indexHtml);
       await asyncForEach(scriptTags, async tag => {
-        const scriptPath = tag.getAttribute("src");
-        const isUrl = scriptPath && scriptPath.startsWith("http");
-
-        if (scriptPath) {
-          const fileName = `${path.basename(scriptPath).replace(/\./g, "")}`;
-          let content = "";
-          if (isUrl) {
-            const scriptTag = `<script src="${scriptPath}"></script>`;
-            finalIndexHtml += `\n${scriptTag}`;
-          } else {
-            content = await readFile(
-              path.join(process.cwd(), webAppSourcePath, scriptPath)
-            );
-            const serviceContent = await getWebServiceContent(content);
-
-            await createFile(
-              path.join(destinationPath, `${fileName}.sas`),
-              serviceContent
-            );
-            const scriptTag = getScriptTag(
-              target.appLoc,
-              target.serverType,
-              target.streamWebFolder,
-              fileName
-            );
-            finalIndexHtml += `\n${scriptTag}`;
-          }
-        } else {
-          const scriptTag = `<script>${tag.innerText}</script>`;
-          finalIndexHtml += `\n${scriptTag}`;
-        }
+        await updateTagSource(tag, webAppSourcePath, destinationPath, target);
       });
-      const styleSheetPaths = getStyleSheetPaths(indexHtml);
-      await asyncForEach(styleSheetPaths, async styleSheetPath => {
-        const isUrl = styleSheetPath.startsWith("http");
-        const fileName = `${path.basename(styleSheetPath).replace(/\./g, "")}`;
-        let content = "";
-
-        if (isUrl) {
-          const linkTag = `<link rel="stylesheet" href="${styleSheetPath}" />`;
-          finalIndexHtml += `\n${linkTag}`;
-        } else {
-          content = await readFile(
-            path.join(process.cwd(), webAppSourcePath, styleSheetPath)
-          );
-          const serviceContent = await getWebServiceContent(content, "CSS");
-
-          await createFile(
-            path.join(destinationPath, `${fileName}.sas`),
-            serviceContent
-          );
-          const linkTag = getLinkTag(
-            target.appLoc,
-            target.serverType,
-            target.streamWebFolder,
-            fileName
-          );
-          finalIndexHtml += `\n${linkTag}`;
-        }
+      const linkTags = getLinkTags(indexHtml);
+      await asyncForEach(linkTags, async linkTag => {
+        await updateLinkHref(
+          linkTag,
+          webAppSourcePath,
+          destinationPath,
+          target
+        );
       });
-      finalIndexHtml += "</head>";
-      finalIndexHtml += `${indexHtml.querySelector("body")}</html>`;
-      await createClickMeService(finalIndexHtml);
+
+      const faviconTags = getFaviconTags(indexHtml);
+
+      await asyncForEach(faviconTags, async faviconTag => {
+        await updateFaviconHref(
+          faviconTag,
+          webAppSourcePath,
+          destinationPath,
+          target
+        );
+      });
+
+      await createClickMeService(indexHtml.serialize());
     } else {
       throw new Error(
         "webSourcePath has not been specified. Please check your config and try again."
@@ -115,21 +76,77 @@ export async function createWebAppServices(targets = []) {
   });
 }
 
-function getScriptTag(appLoc, serverType, streamWebFolder, fileName) {
-  const permittedServerTypes = ["SAS9", "SASVIYA"];
-  if (!permittedServerTypes.includes(serverType.toUpperCase())) {
-    throw new Error(
-      "Unsupported server type. Supported types are SAS9 and SASVIYA"
-    );
+async function updateTagSource(tag, webAppSourcePath, destinationPath, target) {
+  const scriptPath = tag.getAttribute("src");
+  const isUrl = scriptPath && scriptPath.startsWith("http");
+
+  if (scriptPath) {
+    const fileName = `${path.basename(scriptPath).replace(/\./g, "")}`;
+    if (!isUrl) {
+      const content = await readFile(
+        path.join(process.cwd(), webAppSourcePath, scriptPath)
+      );
+      const serviceContent = await getWebServiceContent(content);
+
+      await createFile(
+        path.join(destinationPath, `${fileName}.sas`),
+        serviceContent
+      );
+
+      tag.setAttribute(
+        "src",
+        getScriptPath(
+          target.appLoc,
+          target.serverType,
+          target.streamWebFolder,
+          fileName
+        )
+      );
+    }
   }
-  const storedProcessPath =
-    serverType === "SASVIYA"
-      ? `/SASJobExecution?_PROGRAM=${appLoc}/${streamWebFolder}`
-      : `/SASStoredProcess/?_PROGRAM=${appLoc}/${streamWebFolder}`;
-  return `<script src="${storedProcessPath}/${fileName}"></script>`;
 }
 
-function getLinkTag(appLoc, serverType, streamWebFolder, fileName) {
+async function updateLinkHref(
+  linkTag,
+  webAppSourcePath,
+  destinationPath,
+  target
+) {
+  const linkSourcePath = linkTag.getAttribute("href");
+  const isUrl = linkSourcePath.startsWith("http");
+  const fileName = `${path.basename(linkSourcePath).replace(/\./g, "")}`;
+  if (!isUrl) {
+    const content = await readFile(
+      path.join(process.cwd(), webAppSourcePath, linkSourcePath)
+    );
+    const serviceContent = await getWebServiceContent(content, "CSS");
+
+    await createFile(
+      path.join(destinationPath, `${fileName}.sas`),
+      serviceContent
+    );
+    const linkHref = getLinkHref(
+      target.appLoc,
+      target.serverType,
+      target.streamWebFolder,
+      fileName
+    );
+    linkTag.setAttribute("href", linkHref);
+  }
+}
+
+async function updateFaviconHref(linkTag, webAppSourcePath) {
+  const linkSourcePath = linkTag.getAttribute("href");
+  const isUrl = linkSourcePath.startsWith("http");
+  if (!isUrl) {
+    const base64string = base64img.base64Sync(
+      path.join(process.cwd(), webAppSourcePath, linkSourcePath)
+    );
+    linkTag.setAttribute("href", base64string);
+  }
+}
+
+function getScriptPath(appLoc, serverType, streamWebFolder, fileName) {
   const permittedServerTypes = ["SAS9", "SASVIYA"];
   if (!permittedServerTypes.includes(serverType.toUpperCase())) {
     throw new Error(
@@ -140,20 +157,41 @@ function getLinkTag(appLoc, serverType, streamWebFolder, fileName) {
     serverType === "SASVIYA"
       ? `/SASJobExecution?_PROGRAM=${appLoc}/${streamWebFolder}`
       : `/SASStoredProcess/?_PROGRAM=${appLoc}/${streamWebFolder}`;
-  return `<link rel="stylesheet" href="${storedProcessPath}/${fileName}" />`;
+  return `${storedProcessPath}/${fileName}`;
+}
+
+function getLinkHref(appLoc, serverType, streamWebFolder, fileName) {
+  const permittedServerTypes = ["SAS9", "SASVIYA"];
+  if (!permittedServerTypes.includes(serverType.toUpperCase())) {
+    throw new Error(
+      "Unsupported server type. Supported types are SAS9 and SASVIYA"
+    );
+  }
+  const storedProcessPath =
+    serverType === "SASVIYA"
+      ? `/SASJobExecution?_PROGRAM=${appLoc}/${streamWebFolder}`
+      : `/SASStoredProcess/?_PROGRAM=${appLoc}/${streamWebFolder}`;
+  return `${storedProcessPath}/${fileName}`;
 }
 
 function getScriptTags(parsedHtml) {
-  return parsedHtml.querySelectorAll("script");
+  return parsedHtml.window.document.querySelectorAll("script");
 }
 
-function getStyleSheetPaths(parsedHtml) {
-  const styleSheetUrls = parsedHtml
-    .querySelectorAll("link")
-    .filter(s => s.getAttribute("rel") === "stylesheet")
-    .map(s => s.getAttribute("href"));
+function getLinkTags(parsedHtml) {
+  const linkTags = Array.from(
+    parsedHtml.window.document.querySelectorAll("link")
+  ).filter(s => s.getAttribute("rel") === "stylesheet");
 
-  return styleSheetUrls;
+  return linkTags;
+}
+
+function getFaviconTags(parsedHtml) {
+  const linkTags = Array.from(
+    parsedHtml.window.document.querySelectorAll("link")
+  ).filter(s => s.getAttribute("rel").includes("icon"));
+
+  return linkTags;
 }
 
 async function createBuildDestinationFolder() {
@@ -215,7 +253,24 @@ async function createClickMeService(indexHtmlContent) {
   let clickMeServiceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;\ndata _null_;\nfile sasjs;\n`;
 
   lines.forEach(line => {
-    clickMeServiceContent += `put '${line}';\n`;
+    const chunkedLines = chunk(line);
+    if (chunkedLines.length === 1) {
+      clickMeServiceContent += `put '${chunkedLines[0]
+        .split("'")
+        .join("''")}';\n`;
+    } else {
+      let combinedLines = "";
+      chunkedLines.forEach((chunkedLine, index) => {
+        let text = `put '${chunkedLine.split("'").join("''")}'`;
+        if (index !== chunkedLines.length - 1) {
+          text += "@;\n";
+        } else {
+          text += ";\n";
+        }
+        combinedLines += text;
+      });
+      clickMeServiceContent += combinedLines;
+    }
   });
   clickMeServiceContent += "run;\n%sasjsout(HTML)";
   await createFile(
