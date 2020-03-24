@@ -214,7 +214,7 @@ async function getWebServiceContent(content, type = "JS") {
     .replace(/\r\n/g, "\n")
     .split("\n")
     .filter(l => !!l);
-  let serviceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;
+  let serviceContent = `${sasjsout}\nfilename sasjs temp lrecl=99999999;
 data _null_;
 file sasjs;
 `;
@@ -250,7 +250,7 @@ function chunk(text, maxLength = 120) {
 
 async function createClickMeService(indexHtmlContent) {
   const lines = indexHtmlContent.replace(/\r\n/g, "\n").split("\n");
-  let clickMeServiceContent = `${sasjsout}\nfilename sasjs temp lrecl=132006;\ndata _null_;\nfile sasjs;\n`;
+  let clickMeServiceContent = `${sasjsout}\nfilename sasjs temp lrecl=99999999;\ndata _null_;\nfile sasjs;\n`;
 
   lines.forEach(line => {
     const chunkedLines = chunk(line);
