@@ -8,6 +8,8 @@
 
 There is also a feature to let you deploy your frontend as a service, bypassing the need to access the SAS Web Server.
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/hUpBqExNec4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Usage
 
 1. Install globally using `npm` as follows:
