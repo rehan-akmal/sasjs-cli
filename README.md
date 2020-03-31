@@ -10,14 +10,14 @@ There is also a feature to let you deploy your frontend as a service, bypassing 
 
 ## Usage
 
-1. Install the CLI via `npm`
-   ```
-       npm install -g sasjs-cli
-   ```
+1. Install globally using `npm` as follows:
+```
+  npm i -g sasjs-cli
+```
 2. You will then be able to run the command `sasjs` from your command line with one of the available options.
 
 ```
-    sasjs <option>
+  sasjs <option>
 ```
 
 ## Available Options
