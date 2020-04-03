@@ -272,16 +272,20 @@ async function getDependencies(filePaths) {
 export async function getDependencyPaths(fileContent) {
   const sourcePaths = await getSourcePaths();
   const dependenciesStart = fileContent.split("<h4> Dependencies </h4>");
+  let dependencies = [];
   if (dependenciesStart.length > 1) {
-    let dependencies = dependenciesStart[1]
+    let count = 1;
+    while (count < dependenciesStart.length){
+      let dependency = dependenciesStart[count]
       .split("**/")[0]
       .replace(/\r\n/g, "\n")
       .split("\n")
       .filter(d => !!d)
       .map(d => d.replace(/\@li/g, "").replace(/ /g, ""))
       .filter(d => d.endsWith(".sas"));
-    dependencies = [...new Set(dependencies)];
-
+      dependencies = [...dependencies, ...dependency];
+      count++;
+    }
     let dependencyPaths = [];
     const foundDependencies = [];
     await asyncForEach(sourcePaths, async sourcePath => {
